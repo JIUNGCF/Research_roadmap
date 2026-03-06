@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 연구 로드맵</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f7f6;
+    --card: #ffffff;
+    --text: #1c1917;
+    --muted: #78716c;
+    --faint: #a8a29e;
+    --border: #e7e5e4;
+    --border-light: #f5f5f4;
+    --track-a: #0ea5e9;
+    --track-a-light: #e0f2fe;
+    --track-a-mid: #7dd3fc;
+    --track-a-dark: #0369a1;
+    --track-b: #8b5cf6;
+    --track-b-light: #ede9fe;
+    --track-b-mid: #c4b5fd;
+    --track-b-dark: #6d28d9;
+    --track-p: #f43f5e;
+    --track-p-light: #ffe4e6;
+    --track-p-mid: #fda4af;
+    --track-p-dark: #be123c;
+    --green: #22c55e;
+    --green-light: #f0fdf4;
+    --green-border: #86efac;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes checkPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  @keyframes progressGlow {
+    0%, 100% { box-shadow: 0 0 4px rgba(34,197,94,0.3); }
+    50% { box-shadow: 0 0 12px rgba(34,197,94,0.5); }
+  }
+
+  .fade-up { animation: fadeUp 0.4s ease both; }
+  .slide-in { animation: slideIn 0.3s ease both; }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #1c1917 0%, #292524 60%, #1c1917 100%);
+    padding: 36px 32px 28px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 80% 20%, rgba(14,165,233,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(139,92,246,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .header-inner { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+  .header-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: #a8a29e; letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .header h1 { font-size: 30px; font-weight: 900; line-height: 1.2; }
+  .header p { font-size: 14px; color: #d6d3d1; margin-top: 6px; }
+
+  /* ── Container ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px 60px; }
+
+  /* ── Track Cards ── */
+  .track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .track-card {
+    border-radius: 16px; padding: 22px 24px; color: white;
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .track-card:hover { transform: translateY(-3px); }
+  .track-card-bg {
+    position: absolute; right: -24px; top: -24px;
+    font-size: 110px; opacity: 0.07; pointer-events: none;
+  }
+  .track-card h3 { font-size: 17px; font-weight: 800; }
+  .track-card .goal { font-size: 12px; opacity: 0.8; line-height: 1.5; margin: 4px 0 12px; }
+  .track-progress-bar {
+    height: 5px; background: rgba(255,255,255,0.2);
+    border-radius: 3px; overflow: hidden; margin-bottom: 12px;
+  }
+  .track-progress-fill {
+    height: 100%; border-radius: 3px;
+    background: rgba(255,255,255,0.85);
+    transition: width 0.5s ease;
+  }
+  .tag {
+    display: inline-block; background: rgba(255,255,255,0.15);
+    border-radius: 6px; padding: 4px 10px; font-size: 11px;
+    margin-right: 6px; margin-bottom: 4px;
+  }
+  .track-link { margin-top: 14px; font-size: 13px; font-weight: 700; }
+
+  /* ── Gantt ── */
+  .gantt-wrap {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px;
+  }
+  .gantt-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .gantt-header h2 { font-size: 15px; font-weight: 700; }
+  .filter-btn {
+    padding: 4px 10px; border-radius: 6px; font-size: 12px;
+    font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+    background: white; color: var(--muted); transition: all 0.15s;
+  }
+  .filter-btn.active {
+    border: 1.5px solid #1c1917; background: #1c1917; color: white;
+  }
+
+  /* ── Phase Card ── */
+  .phase-card {
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    border: 1px solid; transition: all 0.3s ease;
+  }
+  .phase-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; flex-wrap: wrap; gap: 6px;
+  }
+
+  /* ── Task Row ── */
+  .task-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 6px;
+    border: 1px solid; margin-bottom: 4px;
+    transition: all 0.2s ease;
+  }
+  .task-row.done { text-decoration: line-through; }
+
+  /* ── Checkbox ── */
+  .checkbox {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 2px solid #d6d3d1; background: white;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    transition: all 0.2s ease; padding: 0;
+  }
+  .checkbox.checked { animation: checkPop 0.3s ease; }
+  .checkbox svg { display: none; }
+  .checkbox.checked svg { display: block; }
+
+  /* ── Inline Edit ── */
+  .inline-edit {
+    cursor: pointer; border-bottom: 1px dashed transparent;
+    transition: border-color 0.15s;
+  }
+  .inline-edit:hover { border-bottom-color: var(--faint); }
+  .inline-input {
+    border: 1px solid var(--track-a); border-radius: 4px;
+    padding: 2px 6px; font-size: inherit; font-weight: inherit;
+    font-family: inherit; background: #f0f9ff; outline: none; width: 100%;
+  }
+
+  /* ── Add Task ── */
+  .add-btn {
+    width: 100%; padding: 7px 10px; background: transparent;
+    border: 1.5px dashed; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; font-family: inherit;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { background: rgba(0,0,0,0.02); }
+  .add-form {
+    padding: 12px; background: var(--bg); border-radius: 8px;
+    border: 1.5px solid;
+  }
+  .add-form input {
+    width: 100%; padding: 7px 10px; border-radius: 6px;
+    border: 1px solid var(--border); font-size: 12px;
+    outline: none; font-family: inherit; box-sizing: border-box;
+  }
+  .risk-btn {
+    padding: 4px 10px; border-radius: 5px; font-size: 10px;
+    font-weight: 700; cursor: pointer;
+  }
+  .submit-btn {
+    padding: 5px 14px; border-radius: 6px; border: none;
+    color: white; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .cancel-btn {
+    padding: 5px 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: white;
+    font-size: 11px; cursor: pointer; color: var(--muted); font-family: inherit;
+  }
+
+  /* ── Badge ── */
+  .badge {
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .risk-badge {
+    font-size: 9px; font-weight: 700; padding: 1px 6px;
+    border-radius: 3px; border: 1px solid; white-space: nowrap;
+    background: white;
+  }
+
+  /* ── Progress Bar ── */
+  .progress-track {
+    flex: 1; height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── Bottom Cards ── */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .risk-card {
+    background: var(--card); border-radius: 14px;
+    border: 1px solid var(--border); padding: 18px;
+  }
+  .goals-card {
+    background: linear-gradient(135deg, #1c1917, #292524);
+    border-radius: 14px; padding: 18px; color: white;
+  }
+
+  /* ── Back Button ── */
+  .back-btn {
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    font-size: 12px; font-weight: 600; padding: 6px 14px;
+    border-radius: 6px; cursor: pointer; margin-bottom: 14px;
+    font-family: inherit; transition: background 0.15s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* ── Detail Header Stats ── */
+  .stat-box {
+    background: rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 16px;
+  }
+  .stat-label { font-size: 10px; opacity: 0.7; }
+  .stat-value { font-size: 18px; font-weight: 800; }
+
+  /* ── Semester Divider ── */
+  .semester-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0 20px 36px;
+  }
+  .semester-divider .line { height: 1px; flex: 1; }
+  .semester-divider .label {
+    font-size: 11px; font-weight: 700; color: var(--faint);
+    white-space: nowrap; padding: 4px 12px;
+    background: var(--border-light); border-radius: 20px;
+  }
+
+  /* ── Notion embed hint ── */
+  .embed-hint {
+    text-align: center; padding: 12px; font-size: 11px;
+    color: var(--faint); border-top: 1px solid var(--border-light);
+    margin-top: 40px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .track-grid, .bottom-grid { grid-template-columns: 1fr; }
+    .container { padding: 16px 16px 40px; }
+    .header { padding: 24px 16px 20px; }
+    .header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+const makeId = () => Math.random().toString(36).slice(2, 10);
+
+const TRACKS = {
+  A: { name:"CO₂ 히트펌프 시뮬레이션", short:"히트펌프", color:"#0ea5e9", light:"#e0f2fe", mid:"#7dd3fc", dark:"#0369a1", icon:"🔥", goal:"Phase 2 완료 — 정상상태 CO₂ 사이클 구동, COP 문헌 일치" },
+  B: { name:"Ontology 기반 AI Agent", short:"AI Agent", color:"#8b5cf6", light:"#ede9fe", mid:"#c4b5fd", dark:"#6d28d9", icon:"🧠", goal:"Step 7 — 도면→공간정보 자동추출 + 자연어 질의 데모" },
+  PAPER: { name:"논문 투고", short:"논문", color:"#f43f5e", light:"#ffe4e6", mid:"#fda4af", dark:"#be123c", icon:"📝", goal:"SCI + Roomvent 투고 완료" },
+};
+
+const RISK = {
+  high: { bg:"#fef2f2", border:"#fca5a5", dot:"#ef4444", label:"높음" },
+  mid:  { bg:"#fffbeb", border:"#fcd34d", dot:"#f59e0b", label:"보통" },
+  low:  { bg:"#f0fdf4", border:"#86efac", dot:"#22c55e", label:"낮음" },
+};
+
+function initData() {
+  return {
+    A: [
+      { id:makeId(), phase:"Phase 1", title:"컴포넌트 완성", semester:"1학기", period:"4월", status:"active", tasks:[
+        { id:makeId(), name:"GasCooler Check Model & 시뮬레이션 실행", risk:"low", week:"4월 1주", done:false },
+        { id:makeId(), name:"GasCoolerTest 작성 및 검증", risk:"low", week:"4월 2주", done:false },
+        { id:makeId(), name:"Evaporator 모델 (2상 증발 + 과열)", risk:"high", week:"4월 3~4주", done:false },
+        { id:makeId(), name:"EvaporatorTest 작성 및 검증", risk:"mid", week:"4월 5주", done:false },
+      ]},
+      { id:makeId(), phase:"Phase 2", title:"정상상태 사이클 조립", semester:"1학기", period:"5월", status:"upcoming", tasks:[
+        { id:makeId(), name:"Systems/BasicCycle — 4개 부품 connect()", risk:"mid", week:"5월 1주", done:false },
+        { id:makeId(), name:"경계조건 설정 (고압/저압, 물/공기)", risk:"low", week:"5월 2주", done:false },
+        { id:makeId(), name:"P-h 선도 검증, COP 계산", risk:"mid", week:"5월 3주", done:false },
+        { id:makeId(), name:"문헌 비교 · Phase 2 마무리", risk:"low", week:"5월 4주", done:false },
+      ]},
+      { id:makeId(), phase:"Phase 3", title:"동적 모델 전환", semester:"2학기", period:"9~10월", status:"future", tasks:[
+        { id:makeId(), name:"StorageTank (성층화, der(T) 미분방정식)", risk:"high", week:"TBD", done:false },
+        { id:makeId(), name:"열교환기 동적화 (금속벽 열용량, 냉매 체적)", risk:"high", week:"TBD", done:false },
+        { id:makeId(), name:"배관 모델 (압력강하, 열손실)", risk:"mid", week:"TBD", done:false },
+      ]},
+      { id:makeId(), phase:"Phase 4", title:"제어 시스템", semester:"2학기", period:"10~11월", status:"future", tasks:[
+        { id:makeId(), name:"팽창밸브 PID 과열도 제어", risk:"mid", week:"TBD", done:false },
+        { id:makeId(), name:"고압 최적 제어 (Kauf/Liao 상관식)", risk:"high", week:"TBD", done:false },
+        { id:makeId(), name:"인버터/온오프 운전 제어", risk:"mid", week:"TBD", done:false },
+      ]},
+      { id:makeId(), phase:"Phase 5", title:"시스템 통합", semester:"2학기", period:"11~12월", status:"future", tasks:[
+        { id:makeId(), name:"전체 CHPWH (사이클+탱크+펌프+외기+부하)", risk:"high", week:"TBD", done:false },
+        { id:makeId(), name:"기상 데이터, 급탕 패턴 프로파일", risk:"mid", week:"TBD", done:false },
+        { id:makeId(), name:"연간/일간 시뮬레이션", risk:"mid", week:"TBD", done:false },
+      ]},
+      { id:makeId(), phase:"Phase 6", title:"검증 & 최적화", semester:"2학기+", period:"12월~", status:"future", tasks:[
+        { id:makeId(), name:"실험 데이터 비교 (Nekså, Stene)", risk:"mid", week:"TBD", done:false },
+        { id:makeId(), name:"파라미터 최적화 (Bitzer Software 등)", risk:"mid", week:"TBD", done:false },
+        { id:makeId(), name:"설계 최적화 (가스쿨러, 탱크, 제어 전략)", risk:"high", week:"TBD", done:false },
+      ]},
+    ],
+    B: [
+      { id:makeId(), phase:"Step 0-1", title:"환경 구축 · 도면 분석", semester:"1학기", period:"4월 초", status:"active", tasks:[
+        { id:makeId(), name:"DWG → DXF 변환 (ODA Converter 설치)", risk:"low", week:"4월 1주", done:false },
+        { id:makeId(), name:"레이어 목록 추출, 벽 레이어 특정", risk:"low", week:"4월 2주", done:false },
+      ]},
+      { id:makeId(), phase:"Step 2-3", title:"선분 추출 · Noding 전처리", semester:"1학기", period:"4~5월", status:"upcoming", tasks:[
+        { id:makeId(), name:"LINE/ARC/POLYLINE → 직선 조각 변환", risk:"mid", week:"4월 3~4주", done:false },
+        { id:makeId(), name:"틈 메우기 + 교차점 쪼개기 (Noding)", risk:"high", week:"4월5~5월1주", done:false },
+      ]},
+      { id:makeId(), phase:"Step 4-5", title:"공간 탐지 · 속성 분석", semester:"1학기", period:"5월", status:"upcoming", tasks:[
+        { id:makeId(), name:"polygonize로 닫힌 공간(방) 찾기", risk:"high", week:"5월 2주", done:false },
+        { id:makeId(), name:"공간 탐지 디버깅 · 검증", risk:"mid", week:"5월 3주", done:false },
+        { id:makeId(), name:"벽/문/창/인접관계 속성 분석", risk:"mid", week:"5월 4주", done:false },
+      ]},
+      { id:makeId(), phase:"Step 6", title:"결과 저장 · 검증", semester:"1학기", period:"6월 초", status:"upcoming", tasks:[
+        { id:makeId(), name:"JSON 출력 구조 설계 · 저장", risk:"low", week:"6월 1주", done:false },
+        { id:makeId(), name:"시각 검증 (도면 위 오버레이)", risk:"low", week:"6월 1주", done:false },
+      ]},
+      { id:makeId(), phase:"Step 7", title:"AI Agent 연동", semester:"1학기", period:"6월", status:"upcoming", tasks:[
+        { id:makeId(), name:"자연어 도면 질의응답 프로토타입", risk:"mid", week:"6월 2주", done:false },
+        { id:makeId(), name:"Ontology 연계 (IFC/BOT/BRICK)", risk:"high", week:"6월 3주", done:false },
+        { id:makeId(), name:"데모 완성 · 문서화", risk:"low", week:"6월 4주", done:false },
+      ]},
+    ],
+  };
+}
+
+const GANTT = [
+  { id:"P1", phase:"Roomvent", title:"체코 논문", start:1, end:2, track:"PAPER", cnt:1 },
+  { id:"P2", phase:"SCI", title:"SCI 논문", start:1, end:3, track:"PAPER", cnt:1 },
+  { id:"A1", phase:"Phase 1", title:"컴포넌트 완성", start:4, end:7, track:"A", cnt:4 },
+  { id:"A2", phase:"Phase 2", title:"정상상태 사이클", start:8, end:11, track:"A", cnt:4 },
+  { id:"AM", phase:"마무리", title:"정리·문서화", start:12, end:15, track:"A", cnt:3 },
+  { id:"B0", phase:"Step 0-1", title:"환경 구축", start:4, end:5, track:"B", cnt:2 },
+  { id:"B1", phase:"Step 2-3", title:"선분·전처리", start:6, end:9, track:"B", cnt:2 },
+  { id:"B2", phase:"Step 4-5", title:"공간 탐지", start:9, end:11, track:"B", cnt:3 },
+  { id:"B3", phase:"Step 6-7", title:"출력·Agent", start:12, end:15, track:"B", cnt:5 },
+];
+
+const WEEKS = Array.from({length:15},(_,i) => {
+  const m = ["3월","3월","3월","4월","4월","4월","4월","5월","5월","5월","5월","6월","6월","6월","6월"];
+  return { num:i+1, month:m[i] };
+});
+const MONTHS = ["3월","4월","5월","6월"].map(m => ({ month:m, count: WEEKS.filter(w=>w.month===m).length }));
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let state = {
+  view: "overview",       // "overview" | "A" | "B"
+  ganttFilter: "ALL",
+  data: initData(),
+};
+
+function setState(partial) {
+  Object.assign(state, partial);
+  render();
+}
+
+function updateTrack(key, fn) {
+  state.data[key] = fn(state.data[key]);
+  render();
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) {
+    for (const [k,v] of Object.entries(attrs)) {
+      if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (k === 'className') el.className = v;
+      else if (k === 'innerHTML') el.innerHTML = v;
+      else el.setAttribute(k, v);
+    }
+  }
+  for (const c of children.flat()) {
+    if (c == null) continue;
+    el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return el;
+}
+
+function stats(rm) {
+  let total = 0, done = 0;
+  rm.forEach(p => { total += p.tasks.length; done += p.tasks.filter(t=>t.done).length; });
+  return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+}
+
+function phaseDone(phase) {
+  return phase.tasks.length > 0 && phase.tasks.every(t => t.done);
+}
+
+// ══════════════════════════════════════════
+//  COMPONENTS
+// ══════════════════════════════════════════
+
+function renderCheckbox(task, trackColor, trackKey, phaseId) {
+  const btn = h('button', {
+    className: 'checkbox' + (task.done ? ' checked' : ''),
+    style: {
+      borderColor: task.done ? trackColor : '#d6d3d1',
+      background: task.done ? trackColor : 'white',
+    },
+    onClick: (e) => {
+      e.stopPropagation();
+      updateTrack(trackKey, rm => rm.map(p =>
+        p.id === phaseId ? {...p, tasks: p.tasks.map(t => t.id === task.id ? {...t, done:!t.done} : t)} : p
+      ));
+    }
+  },
+    h('svg', {innerHTML:'<path d="M1 5L4.5 8.5L11 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>', style:{width:'11px',height:'9px'}})
+  );
+  // Fix SVG
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','11'); svg.setAttribute('height','9'); svg.setAttribute('viewBox','0 0 12 10'); svg.setAttribute('fill','none');
+  svg.style.display = task.done ? 'block' : 'none';
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d','M1 5L4.5 8.5L11 1.5');
+  path.setAttribute('stroke','white');
+  path.setAttribute('stroke-width','2');
+  path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round');
+  svg.appendChild(path);
+  btn.innerHTML = '';
+  btn.appendChild(svg);
+  return btn;
+}
+
+function renderInlineEdit(value, onSave, extraStyle) {
+  const span = h('span', {
+    className: 'inline-edit',
+    style: extraStyle || {},
+  }, value);
+
+  span.addEventListener('click', () => {
+    const input = h('input', {
+      className: 'inline-input',
+      value: value,
+      style: { fontSize: extraStyle?.fontSize || '12px' },
+    });
+    span.replaceWith(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      const v = input.value.trim();
+      if (v && v !== value) onSave(v);
+      render();
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') render();
+    });
+  });
+  return span;
+}
+
+function renderProgressBar(done, total, color) {
+  const pct = total ? Math.round(done/total*100) : 0;
+  return h('div', {style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}},
+    h('div', {className:'progress-track'},
+      h('div', {className:'progress-fill', style:{width:pct+'%', background:`linear-gradient(90deg,${color},${color}cc)`}})
+    ),
+    h('span', {style:{fontSize:'11px',fontWeight:'700',color:pct===100?'var(--green)':'var(--muted)',minWidth:'36px',textAlign:'right'}}, pct+'%')
+  );
+}
+
+function renderBadge(status) {
+  const map = {
+    active: {bg:'#dcfce7',color:'#16a34a',label:'진행 중'},
+    upcoming: {bg:'#dbeafe',color:'#2563eb',label:'예정'},
+    future: {bg:'#f5f5f4',color:'#a8a29e',label:'2학기 이후'},
+    done: {bg:'#dcfce7',color:'#16a34a',label:'✓ 완료'},
+  };
+  const s = map[status];
+  return h('span', {className:'badge', style:{color:s.color,background:s.bg}}, s.label);
+}
+
+function renderAddTask(trackKey, phaseId, trackColor) {
+  const wrapper = h('div', {style:{marginTop:'8px'}});
+  const btn = h('button', {
+    className: 'add-btn',
+    style: { borderColor: trackColor+'50', color: trackColor },
+  }, h('span', {style:{fontSize:'15px',lineHeight:'1'}}, '+'), ' 태스크 추가');
+
+  btn.addEventListener('click', () => {
+    wrapper.innerHTML = '';
+    const form = h('div', {className:'add-form', style:{borderColor:trackColor+'40'}});
+    const nameInput = h('input', {placeholder:'태스크 이름', style:{marginBottom:'8px'}});
+    let selectedRisk = 'mid';
+    const weekInput = h('input', {placeholder:'목표 일정 (예: 5월 2주)', style:{flex:'1',minWidth:'120px',fontSize:'11px'}});
+
+    const riskBtns = h('div', {style:{display:'flex',gap:'4px'}});
+    ['low','mid','high'].forEach(r => {
+      const rb = h('button', {
+        className:'risk-btn',
+        style:{
+          border: selectedRisk===r ? `2px solid ${RISK[r].dot}` : '1px solid var(--border)',
+          background: selectedRisk===r ? RISK[r].bg : 'white',
+          color: RISK[r].dot, fontFamily:'inherit',
+        },
+      }, RISK[r].label);
+      rb.addEventListener('click', () => {
+        selectedRisk = r;
+        riskBtns.querySelectorAll('.risk-btn').forEach((b,i) => {
+          const rr = ['low','mid','high'][i];
+          b.style.border = rr===r ? `2px solid ${RISK[rr].dot}` : '1px solid var(--border)';
+          b.style.background = rr===r ? RISK[rr].bg : 'white';
+        });
+      });
+      riskBtns.appendChild(rb);
+    });
+
+    const submitBtn = h('button', {className:'submit-btn', style:{background:trackColor}}, '추가');
+    submitBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) return;
+      updateTrack(trackKey, rm => rm.map(p =>
+        p.id === phaseId ? {...p, tasks:[...p.tasks, {id:makeId(), name, risk:selectedRisk, week:weekInput.value.trim()||'TBD', done:false}]} : p
+      ));
+    });
+
+    const cancelBtn = h('button', {className:'cancel-btn'}, '취소');
+    cancelBtn.addEventListener('click', render);
+
+    nameInput.addEventListener('keydown', e => { if (e.key==='Enter') submitBtn.click(); });
+
+    const row = h('div', {style:{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}, weekInput, riskBtns, submitBtn, cancelBtn);
+    form.append(nameInput, row);
+    wrapper.appendChild(form);
+    nameInput.focus();
+  });
+
+  wrapper.appendChild(btn);
+  return wrapper;
+}
+
+function renderPhaseCard(phase, trackKey, trackColor, isLast) {
+  const isFuture = phase.status === 'future';
+  const allDone = phaseDone(phase);
+  const doneCount = phase.tasks.filter(t=>t.done).length;
+  const displayStatus = allDone ? 'done' : phase.status;
+
+  // Timeline dot + line
+  const timeline = h('div', {style:{display:'flex',flexDirection:'column',alignItems:'center',width:'20px',flexShrink:'0'}});
+  const dot = h('div', {style:{
+    width:'14px',height:'14px',borderRadius:'50%',flexShrink:'0',zIndex:'1',
+    border:`3px solid ${allDone?'var(--green)':isFuture?'#d6d3d1':trackColor}`,
+    background: allDone?'var(--green)': phase.status==='active'?trackColor:'white',
+    display:'flex',alignItems:'center',justifyContent:'center',
+  }});
+  if (allDone) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','8'); svg.setAttribute('height','6'); svg.setAttribute('viewBox','0 0 12 10'); svg.setAttribute('fill','none');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M1 5L4.5 8.5L11 1.5'); p.setAttribute('stroke','white'); p.setAttribute('stroke-width','2.5');
+    p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round');
+    svg.appendChild(p); dot.appendChild(svg);
+  }
+  timeline.appendChild(dot);
+  if (!isLast) {
+    const line = h('div', {style:{
+      width:'2px', flex:'1',
+      background: isFuture ? 'repeating-linear-gradient(to bottom,#d6d3d1 0,#d6d3d1 4px,transparent 4px,transparent 8px)' : allDone ? 'var(--green)' : trackColor,
+      opacity: isFuture ? '0.5' : '0.3',
+    }});
+    timeline.appendChild(line);
+  }
+
+  // Card
+  const card = h('div', {className:'phase-card', style:{
+    background: allDone ? 'var(--green-light)' : isFuture ? '#fafaf9' : 'var(--card)',
+    borderColor: allDone ? 'var(--green-border)' : isFuture ? 'var(--border)' : trackColor+'40',
+    opacity: isFuture ? '0.7' : '1',
+  }});
+
+  // Header
+  const header = h('div', {className:'phase-header'});
+  const left = h('div', {},
+    h('span', {style:{fontSize:'12px',fontWeight:'800',color:allDone?'var(--green)':isFuture?'var(--faint)':trackColor,marginRight:'8px'}}, phase.phase),
+    h('span', {style:{fontSize:'14px',fontWeight:'700',color:isFuture?'var(--muted)':'var(--text)'}}, phase.title),
+  );
+  const right = h('div', {style:{display:'flex',alignItems:'center',gap:'8px'}},
+    renderInlineEdit(phase.period, (val) => {
+      updateTrack(trackKey, rm => rm.map(p => p.id===phase.id ? {...p,period:val} : p));
+    }, {fontSize:'11px',color:'var(--faint)'}),
+    renderBadge(displayStatus),
+  );
+  header.append(left, right);
+  card.appendChild(header);
+
+  // Progress
+  if (phase.tasks.length > 0) {
+    card.appendChild(renderProgressBar(doneCount, phase.tasks.length, allDone?'var(--green)':trackColor));
+  }
+
+  // Tasks
+  const taskList = h('div', {style:{display:'flex',flexDirection:'column',gap:'4px'}});
+  phase.tasks.forEach(task => {
+    const r = RISK[task.risk];
+    const row = h('div', {className:'task-row', style:{
+      background: task.done ? 'var(--green-light)' : isFuture ? '#f5f5f4' : r.bg,
+      borderColor: task.done ? 'var(--green-border)' : isFuture ? 'var(--border)' : r.border,
+    }});
+
+    row.appendChild(renderCheckbox(task, trackColor, trackKey, phase.id));
+
+    row.appendChild(h('span', {style:{
+      flex:'1', fontSize:'12px', fontWeight:'500',
+      color: task.done ? 'var(--faint)' : isFuture ? 'var(--faint)' : 'var(--text)',
+      textDecoration: task.done ? 'line-through' : 'none',
+    }}, task.name));
+
+    if (!isFuture) {
+      row.appendChild(renderInlineEdit(task.week, (val) => {
+        updateTrack(trackKey, rm => rm.map(p =>
+          p.id===phase.id ? {...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,week:val}:t)} : p
+        ));
+      }, {fontSize:'10px',color:'var(--faint)',whiteSpace:'nowrap'}));
+    }
+
+    if (!isFuture && !task.done) {
+      row.appendChild(h('span', {className:'risk-badge', style:{color:r.dot,borderColor:r.border}}, r.label));
+    }
+    if (task.done) {
+      row.appendChild(h('span', {className:'risk-badge', style:{color:'var(--green)',borderColor:'var(--green-border)'}}, '완료'));
+    }
+
+    taskList.appendChild(row);
+  });
+  card.appendChild(taskList);
+
+  // Add task
+  card.appendChild(renderAddTask(trackKey, phase.id, trackColor));
+
+  return h('div', {style:{display:'flex',gap:'16px'}}, timeline, card);
+}
+
+// ══════════════════════════════════════════
+//  VIEWS
+// ══════════════════════════════════════════
+
+function renderDetailView(trackKey) {
+  const track = TRACKS[trackKey];
+  const roadmap = state.data[trackKey];
+  const s = stats(roadmap);
+  const highRisk = roadmap.reduce((sum,p) => sum + p.tasks.filter(t=>t.risk==='high'&&!t.done).length, 0);
+  const semIdx = roadmap.findIndex(p => p.status === 'future');
+
+  const root = h('div', {className:'slide-in', style:{maxWidth:'900px',margin:'0 auto',padding:'24px 32px 48px'}});
+
+  // Hero
+  const hero = h('div', {style:{
+    background:`linear-gradient(135deg,${track.dark},${track.color})`,
+    borderRadius:'16px',padding:'24px 28px',color:'white',marginBottom:'24px',
+  }});
+
+  const backBtn = h('button', {className:'back-btn'}, '← 전체 보기');
+  backBtn.addEventListener('click', () => setState({view:'overview'}));
+  hero.appendChild(backBtn);
+
+  hero.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'12px'}},
+    h('span', {style:{fontSize:'36px'}}, track.icon),
+    h('div', {},
+      h('h2', {style:{fontSize:'24px',fontWeight:'800',margin:'0'}}, track.name),
+      h('p', {style:{fontSize:'13px',margin:'4px 0 0',opacity:'0.85'}}, track.goal),
+    ),
+  ));
+
+  const statsRow = h('div', {style:{display:'flex',gap:'16px',marginTop:'18px',flexWrap:'wrap'}});
+  [{l:'전체 Phase',v:roadmap.length+'개'},{l:'완료 / 전체',v:`${s.done} / ${s.total}`,c:s.done===s.total&&s.total>0?'#4ade80':null},
+   {l:'고위험 (미완료)',v:highRisk+'개',c:highRisk>0?'#fbbf24':'#4ade80'},{l:'1학기 목표',v:trackKey==='A'?'Phase 2':'Step 7'}
+  ].forEach(st => {
+    statsRow.appendChild(h('div', {className:'stat-box'},
+      h('div', {className:'stat-label'}, st.l),
+      h('div', {className:'stat-value', style:{color:st.c||'white'}}, st.v),
+    ));
+  });
+  hero.appendChild(statsRow);
+
+  // Overall progress bar
+  const pBar = h('div', {style:{marginTop:'16px',display:'flex',alignItems:'center',gap:'8px'}});
+  const pTrack = h('div', {style:{flex:'1',height:'8px',background:'rgba(255,255,255,0.15)',borderRadius:'4px',overflow:'hidden'}});
+  pTrack.appendChild(h('div', {style:{width:s.pct+'%',height:'100%',borderRadius:'4px',background:'linear-gradient(90deg,#4ade80,#22c55e)',transition:'width 0.4s ease'}}));
+  pBar.append(pTrack, h('span', {style:{fontSize:'12px',fontWeight:'700',opacity:'0.9'}}, s.pct+'%'));
+  hero.appendChild(pBar);
+  root.appendChild(hero);
+
+  // Phases
+  const phases = h('div', {style:{padding:'0 4px'}});
+  roadmap.forEach((phase, i) => {
+    if (i === semIdx && semIdx > 0) {
+      const div = h('div', {className:'semester-divider'});
+      div.appendChild(h('div', {className:'line', style:{background:track.color+'44'}}));
+      div.appendChild(h('span', {className:'label'}, '🎯 1학기 목표선 — 아래는 2학기 이후'));
+      div.appendChild(h('div', {className:'line', style:{background:track.color+'44'}}));
+      phases.appendChild(div);
+    }
+    phases.appendChild(renderPhaseCard(phase, trackKey, track.color, i===roadmap.length-1));
+  });
+  root.appendChild(phases);
+  return root;
+}
+
+function renderOverview() {
+  const frag = document.createDocumentFragment();
+
+  // Header
+  const header = h('div', {className:'header'});
+  const inner = h('div', {className:'header-inner'});
+  inner.appendChild(h('div', {className:'header-label'}, '2026 Spring Semester'));
+  inner.appendChild(h('h1', {}, '연구 로드맵'));
+  inner.appendChild(h('p', {}, 'CO₂ 히트펌프 시뮬레이션 · Ontology 기반 AI Agent · 논문 투고'));
+  header.appendChild(inner);
+  frag.appendChild(header);
+
+  const container = h('div', {className:'container'});
+
+  // Track cards
+  const grid = h('div', {className:'track-grid'});
+  ['A','B'].forEach((key, idx) => {
+    const t = TRACKS[key];
+    const rm = state.data[key];
+    const s = stats(rm);
+    const sem = rm.filter(p=>p.status!=='future').length;
+
+    const card = h('div', {
+      className:'track-card fade-up',
+      style: {
+        background:`linear-gradient(135deg,${t.dark},${t.color})`,
+        animationDelay: idx*0.1+'s',
+      }
+    });
+    card.addEventListener('click', () => setState({view:key}));
+    card.addEventListener('mouseenter', e => { e.currentTarget.style.boxShadow=`0 8px 24px ${t.color}44`; });
+    card.addEventListener('mouseleave', e => { e.currentTarget.style.boxShadow='none'; e.currentTarget.style.transform=''; });
+
+    card.appendChild(h('div', {className:'track-card-bg'}, t.icon));
+    card.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px',position:'relative',zIndex:'1'}},
+      h('span', {style:{fontSize:'24px'}}, t.icon),
+      h('h3', {}, t.name),
+    ));
+    card.appendChild(h('p', {className:'goal', style:{position:'relative',zIndex:'1'}}, t.goal));
+
+    // Progress
+    const pWrap = h('div', {style:{display:'flex',alignItems:'center',gap:'8px',position:'relative',zIndex:'1'}});
+    const pTrack = h('div', {className:'track-progress-bar'});
+    pTrack.appendChild(h('div', {className:'track-progress-fill', style:{width:s.pct+'%'}}));
+    pWrap.append(pTrack, h('span', {style:{fontSize:'11px',fontWeight:'700',opacity:'0.9'}}, s.done+'/'+s.total));
+    card.appendChild(pWrap);
+
+    const tags = h('div', {style:{marginTop:'8px',position:'relative',zIndex:'1'}});
+    [`전체 ${rm.length} Phase`, `${s.total}개 태스크`, `1학기: ${sem} Phase`].forEach(l => tags.appendChild(h('span', {className:'tag'}, l)));
+    card.appendChild(tags);
+    card.appendChild(h('div', {className:'track-link', style:{position:'relative',zIndex:'1'}}, '상세 로드맵 보기 →'));
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+
+  // Gantt
+  const ganttWrap = h('div', {className:'gantt-wrap fade-up', style:{animationDelay:'0.2s'}});
+  const ganttHeader = h('div', {className:'gantt-header'});
+  ganttHeader.appendChild(h('h2', {}, '1학기 타임라인'));
+  const filterRow = h('div', {style:{display:'flex',gap:'6px'}});
+  [{key:'ALL',label:'전체'},{key:'PAPER',label:'📝'},{key:'A',label:'🔥'},{key:'B',label:'🧠'}].forEach(f => {
+    const btn = h('button', {
+      className:'filter-btn'+(state.ganttFilter===f.key?' active':''),
+    }, f.label);
+    btn.addEventListener('click', () => setState({ganttFilter:f.key}));
+    filterRow.appendChild(btn);
+  });
+  ganttHeader.appendChild(filterRow);
+  ganttWrap.appendChild(ganttHeader);
+
+  const ganttScroll = h('div', {style:{overflowX:'auto',padding:'0 0 12px'}});
+  const ganttInner = h('div', {style:{minWidth:'780px',padding:'0 20px'}});
+
+  // Month row
+  const monthRow = h('div', {style:{display:'flex',borderBottom:'1px solid var(--border)'}});
+  monthRow.appendChild(h('div', {style:{width:'150px',flexShrink:'0'}}));
+  MONTHS.forEach(ms => monthRow.appendChild(h('div', {style:{flex:ms.count,textAlign:'center',padding:'10px 0 3px',fontSize:'12px',fontWeight:'700',color:ms.month==='3월'?'var(--track-p)':'#57534e'}}, ms.month)));
+  ganttInner.appendChild(monthRow);
+
+  // Week row
+  const weekRow = h('div', {style:{display:'flex',borderBottom:'1px solid var(--border-light)',marginBottom:'6px'}});
+  weekRow.appendChild(h('div', {style:{width:'150px',flexShrink:'0'}}));
+  WEEKS.forEach(w => weekRow.appendChild(h('div', {style:{flex:'1',textAlign:'center',padding:'3px 0 6px',fontSize:'9px',color:'var(--faint)'}}, 'W'+w.num)));
+  ganttInner.appendChild(weekRow);
+
+  // NOW marker
+  const nowRow = h('div', {style:{display:'flex',position:'relative'}});
+  nowRow.appendChild(h('div', {style:{width:'150px',flexShrink:'0'}}));
+  const nowArea = h('div', {style:{flex:'15',position:'relative',height:'0'}});
+  nowArea.appendChild(h('div', {style:{position:'absolute',left:(0.5/15*100)+'%',top:'-6px',bottom:'-300px',width:'2px',background:'var(--track-p)',opacity:'0.25',zIndex:'1'}}));
+  const nowLabel = h('div', {style:{position:'absolute',left:(0.5/15*100)+'%',top:'-14px',transform:'translateX(-50%)',background:'var(--track-p)',color:'white',fontSize:'8px',padding:'2px 5px',borderRadius:'3px',fontWeight:'700',zIndex:'2',fontFamily:"'JetBrains Mono',monospace"}}, 'NOW');
+  nowArea.appendChild(nowLabel);
+  nowRow.appendChild(nowArea);
+  ganttInner.appendChild(nowRow);
+
+  // Bars
+  const filtered = state.ganttFilter === 'ALL' ? GANTT : GANTT.filter(p=>p.track===state.ganttFilter);
+  filtered.forEach(phase => {
+    const t = TRACKS[phase.track];
+    const row = h('div', {style:{display:'flex',alignItems:'center',marginBottom:'5px'}});
+    const label = h('div', {style:{width:'150px',flexShrink:'0',paddingRight:'10px',display:'flex',alignItems:'center',gap:'6px'}});
+    label.appendChild(h('span', {style:{fontSize:'12px'}}, t.icon));
+    label.appendChild(h('div', {},
+      h('div', {style:{fontSize:'10px',fontWeight:'700',color:t.color}}, phase.phase),
+      h('div', {style:{fontSize:'10px',color:'var(--muted)'}}, phase.title),
+    ));
+    row.appendChild(label);
+
+    const barArea = h('div', {style:{flex:'15',display:'flex',position:'relative',height:'30px'}});
+    WEEKS.forEach(() => barArea.appendChild(h('div', {style:{flex:'1',borderLeft:'1px solid #fafaf9'}})));
+    const bar = h('div', {style:{
+      position:'absolute',
+      left:((phase.start-1)/15*100)+'%',
+      width:((phase.end-phase.start+1)/15*100)+'%',
+      top:'5px',height:'20px',borderRadius:'5px',
+      background:`linear-gradient(135deg,${t.mid},${t.light})`,
+      border:`1.5px solid ${t.mid}`,
+      display:'flex',alignItems:'center',justifyContent:'center',
+      fontSize:'9px',fontWeight:'700',color:t.color,
+    }}, phase.cnt+'개');
+    barArea.appendChild(bar);
+    row.appendChild(barArea);
+    ganttInner.appendChild(row);
+  });
+  ganttScroll.appendChild(ganttInner);
+  ganttWrap.appendChild(ganttScroll);
+  container.appendChild(ganttWrap);
+
+  // Bottom row
+  const bottom = h('div', {className:'bottom-grid fade-up', style:{animationDelay:'0.3s'}});
+
+  // High risk
+  const riskCard = h('div', {className:'risk-card'});
+  riskCard.appendChild(h('h3', {style:{fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}, '⚠️ 1학기 고위험 태스크'));
+  const highRiskTasks = [...state.data.A,...state.data.B].filter(p=>p.status!=='future').flatMap(p=>p.tasks.filter(t=>t.risk==='high'&&!t.done).map(t=>({...t,phase:p.phase})));
+  if (highRiskTasks.length === 0) {
+    riskCard.appendChild(h('div', {style:{padding:'12px',background:'var(--green-light)',borderRadius:'6px',fontSize:'12px',color:'#16a34a',textAlign:'center',fontWeight:'600'}}, '모든 고위험 태스크를 완료했습니다! 🎉'));
+  } else {
+    highRiskTasks.forEach(t => {
+      const row = h('div', {style:{padding:'6px 10px',background:'#fef2f2',borderRadius:'6px',marginBottom:'4px',border:'1px solid #fecaca',fontSize:'11px',display:'flex',alignItems:'center',gap:'8px'}});
+      row.appendChild(h('div', {style:{width:'5px',height:'5px',borderRadius:'50%',background:'var(--red)',flexShrink:'0'}}));
+      row.appendChild(h('span', {style:{flex:'1',fontWeight:'600'}}, t.name));
+      row.appendChild(h('span', {style:{color:'var(--faint)',fontSize:'10px'}}, t.week));
+      riskCard.appendChild(row);
+    });
+  }
+  riskCard.appendChild(h('div', {style:{marginTop:'10px',padding:'8px 10px',background:'#fffbeb',borderRadius:'6px',fontSize:'10px',color:'#92400e',lineHeight:'1.5',border:'1px solid #fde68a'}},
+    '💡 Evaporator 2상 모델 + Noding이 최대 병목. 각 1주 버퍼 확보.'));
+  bottom.appendChild(riskCard);
+
+  // Goals
+  const goalsCard = h('div', {className:'goals-card'});
+  goalsCard.appendChild(h('h3', {style:{fontSize:'13px',fontWeight:'700',margin:'0 0 12px',color:'#d6d3d1'}}, '🎯 1학기 도달 목표'));
+  const sA = stats(state.data.A), sB = stats(state.data.B);
+  [{icon:'🔥',name:'히트펌프',color:'#7dd3fc',desc:'Phase 2 — 정상상태 COP 문헌 일치',s:sA},
+   {icon:'🧠',name:'AI Agent',color:'#c4b5fd',desc:'Step 7 — 도면 공간추출 + 질의 데모',s:sB},
+   {icon:'📝',name:'논문',color:'#fda4af',desc:'SCI + Roomvent 투고, 리비전 대응',s:null},
+  ].forEach(g => {
+    const row = h('div', {style:{display:'flex',alignItems:'center',gap:'10px',padding:'8px 12px',background:'rgba(255,255,255,0.06)',borderRadius:'8px',marginBottom:'6px'}});
+    row.appendChild(h('span', {style:{fontSize:'18px'}}, g.icon));
+    const info = h('div', {style:{flex:'1'}});
+    info.appendChild(h('div', {style:{fontSize:'12px',fontWeight:'700',color:g.color}}, g.name));
+    info.appendChild(h('div', {style:{fontSize:'11px',color:'#d6d3d1'}}, g.desc));
+    if (g.s) {
+      const pRow = h('div', {style:{marginTop:'4px',display:'flex',alignItems:'center',gap:'6px'}});
+      const pTrack = h('div', {style:{flex:'1',maxWidth:'120px',height:'4px',background:'rgba(255,255,255,0.15)',borderRadius:'2px',overflow:'hidden'}});
+      pTrack.appendChild(h('div', {style:{width:g.s.pct+'%',height:'100%',borderRadius:'2px',background:g.color,transition:'width 0.4s'}}));
+      pRow.append(pTrack, h('span', {style:{fontSize:'9px',color:'var(--faint)'}}, g.s.done+'/'+g.s.total));
+      info.appendChild(pRow);
+    }
+    row.appendChild(info);
+    goalsCard.appendChild(row);
+  });
+  bottom.appendChild(goalsCard);
+  container.appendChild(bottom);
+
+  // Embed hint
+  container.appendChild(h('div', {className:'embed-hint'},
+    '이 페이지를 Notion에 임베드하려면 /embed 블록에 이 HTML의 호스팅 URL을 붙여넣으세요.'
+  ));
+
+  frag.appendChild(container);
+  return frag;
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  if (state.view === 'A' || state.view === 'B') {
+    app.appendChild(renderDetailView(state.view));
+  } else {
+    app.appendChild(renderOverview());
+  }
+}
+
+render();
+</script>
+</body>
+</html>
