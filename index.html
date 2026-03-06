@@ -388,7 +388,7 @@ function renderPhaseCard(phase,tk,tc,isLast){
     const r=RISK[task.risk];
     const row=h('div',{className:'task-row',style:{background:task.done?'var(--green-light)':isFut?'#f5f5f4':r.bg,borderColor:task.done?'var(--green-border)':isFut?'var(--border)':r.border}});
     row.appendChild(renderCheckbox(task,tc,tk,phase.id));
-    row.appendChild(h('span',{style:{flex:'1',fontSize:'12px',fontWeight:'500',color:task.done?'var(--faint)':isFut?'var(--faint)':'var(--text)',textDecoration:task.done?'line-through':'none'}},task.name));
+    row.appendChild(renderInlineEdit(task.name,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,name:v}:t)}:p));},{flex:'1',fontSize:'12px',fontWeight:'500',color:task.done?'var(--faint)':isFut?'var(--faint)':'var(--text)',textDecoration:task.done?'line-through':'none'}));
     if(!isFut)row.appendChild(renderInlineEdit(task.week,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,week:v}:t)}:p));},{fontSize:'10px',color:'var(--faint)',whiteSpace:'nowrap'}));
     if(!isFut&&!task.done)row.appendChild(renderRiskSelector(task,tk,phase.id));
     if(task.done)row.appendChild(h('span',{className:'risk-badge',style:{color:'var(--green)',borderColor:'var(--green-border)'}},'완료'));
