@@ -111,7 +111,7 @@
     justify-content:center; flex-shrink:0; transition:all 0.2s ease; padding:0;
   }
   .checkbox.checked { animation:checkPop 0.3s ease; }
-  .inline-edit { cursor:pointer; border-bottom:1px dashed transparent; transition:border-color 0.15s; }
+  .inline-edit { cursor:pointer; border-bottom:1px dashed transparent; transition:border-color 0.15s; min-width:0; }
   .inline-edit:hover { border-bottom-color:var(--faint); }
   .inline-input { border:1px solid var(--track-a); border-radius:4px; padding:2px 6px; font-size:inherit; font-weight:inherit; font-family:inherit; background:#f0f9ff; outline:none; width:100%; }
 
@@ -308,14 +308,17 @@ function renderCheckbox(task,tc,tk,pid){
   const svg=makeSvgCheck('11','9','2');svg.style.display=task.done?'block':'none';btn.appendChild(svg);return btn;
 }
 function renderInlineEdit(value,onSave,es){
-  const span=h('span',{className:'inline-edit',style:es||{}},value);
-  span.addEventListener('click',()=>{
-    const input=h('input',{className:'inline-input',value:value,style:{fontSize:es?.fontSize||'12px'}});
-    span.replaceWith(input);input.focus();input.select();
+  const tag=es&&es.flex?'div':'span';
+  const el=h(tag,{className:'inline-edit',style:es||{}},value);
+  el.addEventListener('click',()=>{
+    const inputStyle={fontSize:es?.fontSize||'12px'};
+    if(es&&es.flex)inputStyle.flex=es.flex;
+    const input=h('input',{className:'inline-input',value:value,style:inputStyle});
+    el.replaceWith(input);input.focus();input.select();
     const commit=()=>{const v=input.value.trim();if(v&&v!==value)onSave(v);render();};
     input.addEventListener('blur',commit);
     input.addEventListener('keydown',e=>{if(e.key==='Enter')commit();if(e.key==='Escape')render();});
-  });return span;
+  });return el;
 }
 function renderProgressBar(d,t,c){
   const p=t?Math.round(d/t*100):0;
