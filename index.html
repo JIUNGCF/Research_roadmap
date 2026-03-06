@@ -308,17 +308,37 @@ function renderCheckbox(task,tc,tk,pid){
   const svg=makeSvgCheck('11','9','2');svg.style.display=task.done?'block':'none';btn.appendChild(svg);return btn;
 }
 function renderInlineEdit(value,onSave,es){
-  const tag=es&&es.flex?'div':'span';
-  const el=h(tag,{className:'inline-edit',style:es||{}},value);
-  el.addEventListener('click',()=>{
-    const inputStyle={fontSize:es?.fontSize||'12px'};
-    if(es&&es.flex)inputStyle.flex=es.flex;
-    const input=h('input',{className:'inline-input',value:value,style:inputStyle});
-    el.replaceWith(input);input.focus();input.select();
-    const commit=()=>{const v=input.value.trim();if(v&&v!==value)onSave(v);render();};
-    input.addEventListener('blur',commit);
-    input.addEventListener('keydown',e=>{if(e.key==='Enter')commit();if(e.key==='Escape')render();});
-  });return el;
+  const isFlexItem=es&&es.flex;
+  const displayStyle=Object.assign({},es||{});
+  delete displayStyle.flex;
+  displayStyle.display='inline';
+  displayStyle.cursor='pointer';
+  const wrapper=h('div',{style:{flex:isFlexItem?es.flex:undefined,minWidth:'0'}});
+  const display=h('span',{className:'inline-edit',style:displayStyle},value);
+  const input=h('input',{className:'inline-input',style:{fontSize:es?.fontSize||'12px',width:'100%',display:'none'}});
+  input.value=value;
+  let editing=false;
+  display.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(editing)return;
+    editing=true;
+    display.style.display='none';
+    input.style.display='block';
+    input.value=value;
+    setTimeout(()=>{input.focus();input.select();},10);
+  });
+  const commit=()=>{
+    if(!editing)return;
+    editing=false;
+    const v=input.value.trim();
+    input.style.display='none';
+    display.style.display='inline';
+    if(v&&v!==value){onSave(v);}
+  };
+  input.addEventListener('blur',()=>setTimeout(commit,50));
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape'){editing=false;input.style.display='none';display.style.display='inline';}});
+  wrapper.append(display,input);
+  return wrapper;
 }
 function renderProgressBar(d,t,c){
   const p=t?Math.round(d/t*100):0;
