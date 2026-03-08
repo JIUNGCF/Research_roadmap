@@ -113,7 +113,7 @@
   .checkbox.checked { animation:checkPop 0.3s ease; }
   .inline-edit { cursor:pointer; border-bottom:1px dashed transparent; transition:border-color 0.15s; min-width:0; }
   .inline-edit:hover { border-bottom-color:var(--faint); }
-  .inline-input { border:1px solid var(--track-a); border-radius:4px; padding:2px 6px; font-size:inherit; font-weight:inherit; font-family:inherit; background:#f0f9ff; outline:none; width:100%; }
+  .inline-input { border:1px solid rgba(255,255,255,0.4); border-radius:4px; padding:2px 6px; font-size:inherit; font-weight:inherit; font-family:inherit; background:rgba(255,255,255,0.15); color:inherit; outline:none; width:100%; }
 
   .risk-selector { position:relative; display:inline-block; }
   .risk-selector-btn {
@@ -133,6 +133,15 @@
     transition:background 0.1s; border:none; background:none; width:100%; font-family:inherit;
   }
   .risk-option:hover { background:#f5f5f4; }
+
+  .del-btn {
+    width:20px; height:20px; border-radius:4px; border:none; background:transparent;
+    color:var(--faint); cursor:pointer; font-size:14px; line-height:1;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    transition:all 0.15s; padding:0; font-family:inherit; opacity:0;
+  }
+  .task-row:hover .del-btn { opacity:1; }
+  .del-btn:hover { background:#fef2f2; color:var(--red); }
 
   .add-btn {
     width:100%; padding:7px 10px; background:transparent; border:1.5px dashed;
@@ -402,7 +411,7 @@ function renderPhaseCard(phase,tk,tc,isLast){
   const card=h('div',{className:'phase-card',style:{background:allDone?'var(--green-light)':isFut?'#fafaf9':'var(--card)',borderColor:allDone?'var(--green-border)':isFut?'var(--border)':tc+'40',opacity:isFut?'0.7':'1'}});
   const hdr=h('div',{className:'phase-header'});
   hdr.append(
-    h('div',{},h('span',{style:{fontSize:'12px',fontWeight:'800',color:allDone?'var(--green)':isFut?'var(--faint)':tc,marginRight:'8px'}},phase.phase),h('span',{style:{fontSize:'14px',fontWeight:'700',color:isFut?'var(--muted)':'var(--text)'}},phase.title)),
+    h('div',{style:{display:'flex',alignItems:'center',gap:'0'}},renderInlineEdit(phase.phase,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,phase:v}:p));},{fontSize:'12px',fontWeight:'800',color:allDone?'var(--green)':isFut?'var(--faint)':tc,marginRight:'8px'}),renderInlineEdit(phase.title,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,title:v}:p));},{fontSize:'14px',fontWeight:'700',color:isFut?'var(--muted)':'var(--text)'})),
     h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},renderInlineEdit(phase.period,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,period:v}:p));},{fontSize:'11px',color:'var(--faint)'}),renderBadge(ds)));
   card.appendChild(hdr);
   if(phase.tasks.length>0)card.appendChild(renderProgressBar(dc,phase.tasks.length,allDone?'var(--green)':tc));
@@ -415,6 +424,9 @@ function renderPhaseCard(phase,tk,tc,isLast){
     if(!isFut)row.appendChild(renderInlineEdit(task.week,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,week:v}:t)}:p));},{fontSize:'10px',color:'var(--faint)',whiteSpace:'nowrap'}));
     if(!isFut&&!task.done)row.appendChild(renderRiskSelector(task,tk,phase.id));
     if(task.done)row.appendChild(h('span',{className:'risk-badge',style:{color:'var(--green)',borderColor:'var(--green-border)'}},'완료'));
+    const delBtn=h('button',{className:'del-btn',onClick:e=>{e.stopPropagation();if(confirm('이 태스크를 삭제하시겠습니까?'))updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.filter(t=>t.id!==task.id)}:p));}});
+    delBtn.textContent='✕';
+    row.appendChild(delBtn);
     tl2.appendChild(row);
   });
   card.appendChild(tl2);
@@ -439,14 +451,32 @@ function renderModal(){
     const td=state.data[ph.track];
     if(td){
       const mp=td.filter(p=>ph.phase.includes(p.phase.split(' ')[0])||p.phase.includes(ph.phase.split(' ')[0]));
-      mp.flatMap(p=>p.tasks).forEach(task=>{
-        const r=RISK[task.risk];
-        card.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'8px',padding:'8px 12px',background:task.done?'var(--green-light)':r.bg,borderRadius:'8px',marginBottom:'4px',border:`1px solid ${task.done?'var(--green-border)':r.border}`}},
-          h('div',{style:{width:'8px',height:'8px',borderRadius:'50%',background:task.done?'var(--green)':r.dot,flexShrink:'0'}}),
-          h('span',{style:{flex:'1',fontSize:'12px',fontWeight:'500',textDecoration:task.done?'line-through':'none',color:task.done?'var(--faint)':'var(--text)'}},task.name),
-          h('span',{style:{fontSize:'10px',color:'var(--faint)'}},task.week),
-          h('span',{style:{fontSize:'9px',fontWeight:'700',color:task.done?'var(--green)':r.dot,background:'white',padding:'1px 6px',borderRadius:'3px',border:`1px solid ${task.done?'var(--green-border)':r.border}`}},task.done?'완료':r.label)
-        ));
+      mp.forEach(mPhase=>{
+        mPhase.tasks.forEach(task=>{
+          const r=RISK[task.risk];
+          const row=h('div',{style:{display:'flex',alignItems:'center',gap:'8px',padding:'8px 12px',background:task.done?'var(--green-light)':r.bg,borderRadius:'8px',marginBottom:'4px',border:`1px solid ${task.done?'var(--green-border)':r.border}`}});
+          row.append(
+            h('div',{style:{width:'8px',height:'8px',borderRadius:'50%',background:task.done?'var(--green)':r.dot,flexShrink:'0'}}),
+            h('span',{style:{flex:'1',fontSize:'12px',fontWeight:'500',textDecoration:task.done?'line-through':'none',color:task.done?'var(--faint)':'var(--text)'}},task.name),
+            h('span',{style:{fontSize:'10px',color:'var(--faint)'}},task.week),
+            h('span',{style:{fontSize:'9px',fontWeight:'700',color:task.done?'var(--green)':r.dot,background:'white',padding:'1px 6px',borderRadius:'3px',border:`1px solid ${task.done?'var(--green-border)':r.border}`}},task.done?'완료':r.label)
+          );
+          const del=h('button',{style:{background:'none',border:'none',color:'var(--faint)',cursor:'pointer',fontSize:'13px',padding:'0 2px',flexShrink:'0',transition:'color 0.15s'}});
+          del.textContent='✕';
+          del.addEventListener('mouseenter',()=>{del.style.color='var(--red)';});
+          del.addEventListener('mouseleave',()=>{del.style.color='var(--faint)';});
+          del.addEventListener('click',()=>{if(confirm('삭제하시겠습니까?'))updateTrack(ph.track,rm=>rm.map(p=>p.id===mPhase.id?{...p,tasks:p.tasks.filter(x=>x.id!==task.id)}:p));});
+          row.appendChild(del);
+          card.appendChild(row);
+        });
+        // Add task mini-form for this phase
+        const addRow=h('div',{style:{display:'flex',gap:'6px',marginTop:'8px',marginBottom:'12px'}});
+        const addInput=h('input',{placeholder:'새 태스크 추가...',style:{flex:'1',padding:'6px 10px',borderRadius:'6px',border:'1px solid var(--border)',fontSize:'11px',outline:'none',fontFamily:'inherit'}});
+        const addBtn=h('button',{style:{padding:'6px 12px',borderRadius:'6px',border:'none',background:t.color,color:'white',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}},'추가');
+        addBtn.addEventListener('click',()=>{const n=addInput.value.trim();if(!n)return;updateTrack(ph.track,rm=>rm.map(p=>p.id===mPhase.id?{...p,tasks:[...p.tasks,{id:makeId(),name:n,risk:'mid',week:'TBD',done:false}]}:p));});
+        addInput.addEventListener('keydown',e=>{if(e.key==='Enter')addBtn.click();});
+        addRow.append(addInput,addBtn);
+        card.appendChild(addRow);
       });
     }
     const goBtn=h('button',{style:{marginTop:'14px',padding:'8px 16px',borderRadius:'8px',border:'none',background:t.color,color:'white',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit'}},ph.track==='PAPER'?'논문 상세 보기 →':'상세 로드맵 보기 →');
@@ -484,7 +514,10 @@ function renderDetailView(tk){
   const root=h('div',{className:'slide-in',style:{maxWidth:'900px',margin:'0 auto',padding:'24px 32px 48px'}});
   const hero=h('div',{style:{background:`linear-gradient(135deg,${tr.dark},${tr.color})`,borderRadius:'16px',padding:'24px 28px',color:'white',marginBottom:'24px'}});
   const bb=h('button',{className:'back-btn'},'← 전체 보기');bb.addEventListener('click',()=>setState({view:'overview'}));hero.appendChild(bb);
-  hero.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'12px'}},h('span',{style:{fontSize:'36px'}},tr.icon),h('div',{},h('h2',{style:{fontSize:'24px',fontWeight:'800',margin:'0'}},tr.name),h('p',{style:{fontSize:'13px',margin:'4px 0 0',opacity:'0.85'}},tr.goal))));
+  hero.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'12px'}},h('span',{style:{fontSize:'36px'}},tr.icon),h('div',{},
+    renderInlineEdit(tr.name,v=>{TRACKS[tk].name=v;render();},{fontSize:'24px',fontWeight:'800',color:'white'}),
+    renderInlineEdit(tr.goal,v=>{TRACKS[tk].goal=v;render();},{fontSize:'13px',color:'rgba(255,255,255,0.85)',marginTop:'4px'})
+  )));
   const gl=tk==='A'?'Phase 2':tk==='B'?'Step 7':'투고 완료';
   const sr=h('div',{style:{display:'flex',gap:'16px',marginTop:'18px',flexWrap:'wrap'}});
   [{l:'전체 Phase',v:rm.length+'개'},{l:'완료 / 전체',v:`${s.done} / ${s.total}`,c:s.done===s.total&&s.total>0?'#4ade80':null},{l:'고위험 (미완료)',v:hr+'개',c:hr>0?'#fbbf24':'#4ade80'},{l:'1학기 목표',v:gl}].forEach(x=>{
