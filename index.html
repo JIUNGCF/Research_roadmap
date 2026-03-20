@@ -191,7 +191,7 @@
 <body>
 <div id="app"><div class="loading-screen">로드맵 불러오는 중...</div></div>
 <script>
-const STORAGE_KEY = 'roadmap-2026-v2';
+const STORAGE_KEY = 'roadmap-2026-v3';
 const GANTT_STORAGE_KEY = 'roadmap-2026-gantt';
 const makeId = () => Math.random().toString(36).slice(2, 10);
 const TRACKS = {
@@ -309,21 +309,39 @@ async function loadState() {
 function initGantt() {
   return [
   { id:"P1", phase:"Roomvent", title:"체코 논문", start:1, end:2, track:"PAPER", cnt:1 },
-  { id:"P2", phase:"SCI", title:"SCI 논문", start:1, end:3, track:"PAPER", cnt:1 },
-  { id:"A1", phase:"Phase 1", title:"컴포넌트 완성", start:4, end:7, track:"A", cnt:4 },
-  { id:"A2", phase:"Phase 2", title:"정상상태 사이클", start:8, end:11, track:"A", cnt:4 },
-  { id:"AM", phase:"마무리", title:"정리·문서화", start:12, end:15, track:"A", cnt:3 },
-  { id:"B0", phase:"Phase 1", title:"데이터 수집", start:4, end:5, track:"B", cnt:3 },
-  { id:"B1", phase:"Phase 2", title:"VLM+YOLO 파싱", start:5, end:9, track:"B", cnt:4 },
-  { id:"B2", phase:"Phase 3", title:"공간·기하 분석", start:9, end:11, track:"B", cnt:4 },
-  { id:"B3", phase:"Phase 4-5", title:"KG·Agent 통합", start:12, end:15, track:"B", cnt:6 },
+  { id:"P2", phase:"SCI", title:"SCI 논문", start:1, end:4, track:"PAPER", cnt:1 },
+  { id:"A1", phase:"Phase 1", title:"컴포넌트 완성", start:5, end:8, track:"A", cnt:4 },
+  { id:"A2", phase:"Phase 2", title:"정상상태 사이클", start:10, end:13, track:"A", cnt:4 },
+  { id:"AM", phase:"마무리", title:"정리·문서화", start:14, end:17, track:"A", cnt:3 },
+  { id:"B0", phase:"Phase 1", title:"데이터 수집", start:5, end:6, track:"B", cnt:3 },
+  { id:"B1", phase:"Phase 2", title:"VLM+YOLO 파싱", start:7, end:11, track:"B", cnt:4 },
+  { id:"B2", phase:"Phase 3", title:"공간·기하 분석", start:11, end:13, track:"B", cnt:4 },
+  { id:"B3", phase:"Phase 4-5", title:"KG·Agent 통합", start:14, end:17, track:"B", cnt:6 },
   ];
 }
 let ganttData = initGantt();
-const WEEKS = Array.from({length:15},(_,i)=>{
-  const m=["3월","3월","3월","4월","4월","4월","4월","5월","5월","5월","5월","6월","6월","6월","6월"];
-  return {num:i+1,month:m[i]};
-});
+const TOTAL_WEEKS = 17;
+// 실제 2026년 캘린더 기반 주차 (월~일, ISO 목요일 기준 월 배정)
+// 3월: 4주, 4월: 5주, 5월: 4주, 6월: 4주 = 17주
+const WEEKS = [
+  {num:1, label:"W1", month:"3월", range:"3/2~8"},
+  {num:2, label:"W2", month:"3월", range:"3/9~15"},
+  {num:3, label:"W3", month:"3월", range:"3/16~22"},
+  {num:4, label:"W4", month:"3월", range:"3/23~29"},
+  {num:5, label:"W1", month:"4월", range:"3/30~4/5"},
+  {num:6, label:"W2", month:"4월", range:"4/6~12"},
+  {num:7, label:"W3", month:"4월", range:"4/13~19"},
+  {num:8, label:"W4", month:"4월", range:"4/20~26"},
+  {num:9, label:"W5", month:"4월", range:"4/27~5/3"},
+  {num:10, label:"W1", month:"5월", range:"5/4~10"},
+  {num:11, label:"W2", month:"5월", range:"5/11~17"},
+  {num:12, label:"W3", month:"5월", range:"5/18~24"},
+  {num:13, label:"W4", month:"5월", range:"5/25~31"},
+  {num:14, label:"W1", month:"6월", range:"6/1~7"},
+  {num:15, label:"W2", month:"6월", range:"6/8~14"},
+  {num:16, label:"W3", month:"6월", range:"6/15~21"},
+  {num:17, label:"W4", month:"6월", range:"6/22~28"},
+];
 const MONTHS=["3월","4월","5월","6월"].map(m=>({month:m,count:WEEKS.filter(w=>w.month===m).length}));
 
 let state={view:"overview",ganttFilter:"ALL",data:initData(),modal:null};
@@ -489,7 +507,7 @@ function renderModal(){
     card.append(
       h('div',{style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}},h('span',{style:{fontSize:'20px'}},t.icon),h('span',{style:{fontSize:'11px',fontWeight:'700',color:t.color,background:t.light,padding:'2px 8px',borderRadius:'4px'}},t.short)),
       h('h3',{style:{marginBottom:'6px'}},ph.phase+' — '+ph.title),
-      h('div',{style:{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}},'W'+ph.start+' ~ W'+ph.end+' ('+ph.cnt+'개 태스크)')
+      h('div',{style:{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}},WEEKS[ph.start-1].month+' '+WEEKS[ph.start-1].label+' ~ '+WEEKS[ph.end-1].month+' '+WEEKS[ph.end-1].label+' ('+ph.cnt+'개 태스크)')
     );
     const td=state.data[ph.track];
     if(td){
@@ -528,7 +546,7 @@ function renderModal(){
 
   if(state.modal.type==='week'){
     const wn=state.modal.weekNum,wk=WEEKS[wn-1];
-    card.appendChild(h('h3',{},wk.month+' W'+wn));
+    card.appendChild(h('h3',{},wk.month+' '+wk.label,h('span',{style:{fontSize:'12px',fontWeight:'500',color:'var(--faint)',marginLeft:'8px'}},wk.range)));
     const all=[];
     ganttData.forEach(g=>{if(wn>=g.start&&wn<=g.end){const t=TRACKS[g.track],td=state.data[g.track];if(td)td.forEach(p=>p.tasks.forEach(task=>all.push({...task,trackIcon:t.icon,trackColor:t.color,phaseName:p.phase})));}});
     const seen=new Set(),uniq=all.filter(t=>{if(seen.has(t.id))return false;seen.add(t.id);return true;});
@@ -611,7 +629,7 @@ function renderOverview(){
   });gh.appendChild(fr);gw.appendChild(gh);
 
   const gs=h('div',{style:{overflowX:'auto',padding:'0 0 12px'}});
-  const gi=h('div',{style:{minWidth:'780px',padding:'0 20px'}});
+  const gi=h('div',{style:{minWidth:'880px',padding:'0 20px'}});
   const mr=h('div',{style:{display:'flex',borderBottom:'1px solid var(--border)'}});
   mr.appendChild(h('div',{style:{width:'150px',flexShrink:'0'}}));
   MONTHS.forEach(ms=>mr.appendChild(h('div',{style:{flex:ms.count,textAlign:'center',padding:'10px 0 3px',fontSize:'12px',fontWeight:'700',color:ms.month==='3월'?'var(--track-p)':'#57534e'}},ms.month)));
@@ -620,22 +638,29 @@ function renderOverview(){
   const wr=h('div',{style:{display:'flex',borderBottom:'1px solid var(--border-light)',marginBottom:'6px'}});
   wr.appendChild(h('div',{style:{width:'150px',flexShrink:'0'}}));
   WEEKS.forEach(w=>{
-    const wb=h('div',{className:'week-btn',style:{flex:'1',textAlign:'center',padding:'3px 0 6px',fontSize:'9px',color:'var(--faint)'}},'W'+w.num);
+    const wb=h('div',{className:'week-btn',style:{flex:'1',textAlign:'center',padding:'3px 0 6px',fontSize:'9px',color:'var(--faint)'},title:w.range},w.label);
     wb.addEventListener('click',()=>setState({modal:{type:'week',weekNum:w.num}}));wr.appendChild(wb);
   });gi.appendChild(wr);
 
-  // NOW marker — snap to current week center
-  const semesterStart=new Date(2026,2,2); // W1 starts March 2
+  // NOW marker — find which column today falls in
   const today=new Date();
-  const daysSinceStart=(today-semesterStart)/(1000*60*60*24);
-  const nowWeekNum=Math.min(15,Math.max(1,Math.ceil(daysSinceStart/7)));
-  const nowPct=((nowWeekNum-0.5)/15*100); // center of the week column
+  const todayStr=today.getFullYear()+'-'+(today.getMonth()+1).toString().padStart(2,'0')+'-'+today.getDate().toString().padStart(2,'0');
+  // Week start dates (Mondays) for lookup
+  const weekStarts=[[2026,2,2],[2026,2,9],[2026,2,16],[2026,2,23],[2026,2,30],[2026,3,6],[2026,3,13],[2026,3,20],[2026,3,27],[2026,4,4],[2026,4,11],[2026,4,18],[2026,4,25],[2026,5,1],[2026,5,8],[2026,5,15],[2026,5,22]];
+  let nowCol=0;
+  for(let i=0;i<weekStarts.length;i++){
+    const ws=new Date(weekStarts[i][0],weekStarts[i][1],weekStarts[i][2]);
+    const we=new Date(ws);we.setDate(we.getDate()+6);
+    if(today>=ws&&today<=we){nowCol=i+1;break;}
+  }
+  const nowW=nowCol>0?WEEKS[nowCol-1]:null;
+  const nowPct=nowCol>0?((nowCol-0.5)/TOTAL_WEEKS*100):0;
 
   const nr=h('div',{style:{display:'flex',position:'relative'}});nr.appendChild(h('div',{style:{width:'150px',flexShrink:'0'}}));
-  const na=h('div',{style:{flex:'15',position:'relative',height:'0'}});
-  if(daysSinceStart>=0&&daysSinceStart<=15*7){
+  const na=h('div',{style:{flex:''+TOTAL_WEEKS,position:'relative',height:'0'}});
+  if(nowCol>0){
     na.append(h('div',{style:{position:'absolute',left:nowPct+'%',top:'-6px',bottom:'-300px',width:'2px',background:'var(--track-p)',opacity:'0.25',zIndex:'1'}}),
-      h('div',{style:{position:'absolute',left:nowPct+'%',top:'-14px',transform:'translateX(-50%)',background:'var(--track-p)',color:'white',fontSize:'8px',padding:'2px 5px',borderRadius:'3px',fontWeight:'700',zIndex:'2',fontFamily:"'JetBrains Mono',monospace"}},'W'+nowWeekNum+' NOW'));
+      h('div',{style:{position:'absolute',left:nowPct+'%',top:'-14px',transform:'translateX(-50%)',background:'var(--track-p)',color:'white',fontSize:'8px',padding:'2px 5px',borderRadius:'3px',fontWeight:'700',zIndex:'2',fontFamily:"'JetBrains Mono',monospace"}},nowW.month+' '+nowW.label+' NOW'));
   }
   nr.appendChild(na);gi.appendChild(nr);
 
@@ -646,16 +671,19 @@ function renderOverview(){
     const lb=h('div',{style:{width:'150px',flexShrink:'0',paddingRight:'10px',display:'flex',alignItems:'center',gap:'6px'}});
     lb.append(h('span',{style:{fontSize:'12px'}},t.icon),h('div',{},h('div',{style:{fontSize:'10px',fontWeight:'700',color:t.color}},phase.phase),h('div',{style:{fontSize:'10px',color:'var(--muted)'}},phase.title)));
     row.appendChild(lb);
-    const ba=h('div',{style:{flex:'15',display:'flex',position:'relative',height:'30px'}});
+    const ba=h('div',{style:{flex:''+TOTAL_WEEKS,display:'flex',position:'relative',height:'30px'}});
     WEEKS.forEach(()=>ba.appendChild(h('div',{style:{flex:'1',borderLeft:'1px solid #fafaf9'}})));
 
-    const barWrap=h('div',{style:{position:'absolute',left:((phase.start-1)/15*100)+'%',width:((phase.end-phase.start+1)/15*100)+'%',top:'5px',height:'20px'}});
+    const barWrap=h('div',{style:{position:'absolute',left:((phase.start-1)/TOTAL_WEEKS*100)+'%',width:((phase.end-phase.start+1)/TOTAL_WEEKS*100)+'%',top:'5px',height:'20px'}});
     const bar=h('div',{className:'gantt-bar',style:{position:'absolute',inset:'0',borderRadius:'5px',background:`linear-gradient(135deg,${t.mid},${t.light})`,border:`1.5px solid ${t.mid}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'9px',fontWeight:'700',color:t.color}},phase.cnt+'개');
 
     // Tooltip
     const tip=h('div',{style:{position:'absolute',bottom:'calc(100% + 6px)',left:'50%',transform:'translateX(-50%)',background:'#1c1917',color:'white',fontSize:'10px',fontWeight:'600',padding:'4px 10px',borderRadius:'6px',whiteSpace:'nowrap',pointerEvents:'none',opacity:'0',transition:'opacity 0.15s',zIndex:'20',fontFamily:'inherit'}});
 
-    function updateTip(s,e){ tip.textContent='W'+s+' → W'+e+' ('+WEEKS[s-1].month+'~'+WEEKS[e-1].month+')'; }
+    function updateTip(s,e){ 
+      const sw=WEEKS[s-1],ew=WEEKS[e-1];
+      tip.textContent=sw.month+' '+sw.label+' → '+ew.month+' '+ew.label; 
+    }
 
     // ── Drag to move entire bar ──
     let dragState=null;
@@ -663,7 +691,7 @@ function renderOverview(){
       if(e.target.classList.contains('gantt-resize'))return;
       e.preventDefault();
       const baRect=ba.getBoundingClientRect();
-      const cellW=baRect.width/15;
+      const cellW=baRect.width/TOTAL_WEEKS;
       const startX=e.clientX;
       const origStart=phase.start, origEnd=phase.end, dur=origEnd-origStart;
       bar.classList.add('dragging');
@@ -673,9 +701,9 @@ function renderOverview(){
       const onMove=ev=>{
         const dx=ev.clientX-startX;
         let newStart=origStart+Math.round(dx/cellW);
-        newStart=Math.max(1,Math.min(15-dur,newStart));
+        newStart=Math.max(1,Math.min(TOTAL_WEEKS-dur,newStart));
         const newEnd=newStart+dur;
-        barWrap.style.left=((newStart-1)/15*100)+'%';
+        barWrap.style.left=((newStart-1)/TOTAL_WEEKS*100)+'%';
         updateTip(newStart,newEnd);
         dragState={start:newStart,end:newEnd};
       };
@@ -706,7 +734,7 @@ function renderOverview(){
       handle.addEventListener('mousedown',e=>{
         e.preventDefault(); e.stopPropagation();
         const baRect=ba.getBoundingClientRect();
-        const cellW=baRect.width/15;
+        const cellW=baRect.width/TOTAL_WEEKS;
         const startX=e.clientX;
         const origStart=phase.start, origEnd=phase.end;
         bar.classList.add('dragging');
@@ -719,9 +747,9 @@ function renderOverview(){
           const dCells=Math.round(dx/cellW);
           let ns=origStart, ne=origEnd;
           if(side==='left'){ ns=Math.max(1,Math.min(origEnd,origStart+dCells)); }
-          else { ne=Math.min(15,Math.max(origStart,origEnd+dCells)); }
-          barWrap.style.left=((ns-1)/15*100)+'%';
-          barWrap.style.width=((ne-ns+1)/15*100)+'%';
+          else { ne=Math.min(TOTAL_WEEKS,Math.max(origStart,origEnd+dCells)); }
+          barWrap.style.left=((ns-1)/TOTAL_WEEKS*100)+'%';
+          barWrap.style.width=((ne-ns+1)/TOTAL_WEEKS*100)+'%';
           updateTip(ns,ne);
           rs={start:ns,end:ne};
         };
