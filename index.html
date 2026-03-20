@@ -83,8 +83,13 @@
   .gantt-header h2 { font-size:15px; font-weight:700; }
   .filter-btn { padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:white; color:var(--muted); transition:all 0.15s; font-family:inherit; }
   .filter-btn.active { border:1.5px solid #1c1917; background:#1c1917; color:white; }
-  .gantt-bar { cursor:pointer; transition: filter 0.15s, transform 0.15s; }
-  .gantt-bar:hover { filter:brightness(0.92); transform:scaleY(1.15); }
+  .gantt-bar { cursor:grab; transition: filter 0.15s; user-select:none; }
+  .gantt-bar:hover { filter:brightness(0.92); }
+  .gantt-bar.dragging { cursor:grabbing; opacity:0.85; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+  .gantt-resize { position:absolute; top:0; width:8px; height:100%; cursor:col-resize; z-index:5; }
+  .gantt-resize:hover { background:rgba(0,0,0,0.08); border-radius:2px; }
+  .gantt-resize.left { left:-2px; }
+  .gantt-resize.right { right:-2px; }
   .week-btn { cursor:pointer; transition:color 0.15s, background 0.15s; border-radius:3px; }
   .week-btn:hover { background:#f5f5f4; color:var(--text) !important; }
 
@@ -172,6 +177,8 @@
   .semester-divider .label { font-size:11px; font-weight:700; color:var(--faint); white-space:nowrap; padding:4px 12px; background:var(--border-light); border-radius:20px; }
   .embed-hint { text-align:center; padding:12px; font-size:11px; color:var(--faint); border-top:1px solid var(--border-light); margin-top:40px; }
 
+  .loading-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; font-size:14px; color:var(--muted); }
+
   @media (max-width: 900px) { .track-grid { grid-template-columns:1fr; } }
   @media (max-width: 700px) {
     .track-grid, .bottom-grid { grid-template-columns:1fr; }
@@ -182,8 +189,10 @@
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><div class="loading-screen">로드맵 불러오는 중...</div></div>
 <script>
+const STORAGE_KEY = 'roadmap-2026-data';
+const GANTT_STORAGE_KEY = 'roadmap-2026-gantt';
 const makeId = () => Math.random().toString(36).slice(2, 10);
 const TRACKS = {
   A: { name:"CO₂ 히트펌프 시뮬레이션", short:"히트펌프", color:"#0ea5e9", light:"#e0f2fe", mid:"#7dd3fc", dark:"#0369a1", icon:"🔥", goal:"Phase 2 완료 — 정상상태 CO₂ 사이클 구동, COP 문헌 일치" },
@@ -267,7 +276,33 @@ function initData() {
   };
 }
 
-const GANTT = [
+// ── PERSISTENT STORAGE ──
+async function saveState() {
+  try {
+    if (window.storage) {
+      await window.storage.set(STORAGE_KEY, JSON.stringify({data: state.data, gantt: ganttData}));
+    }
+  } catch (e) {
+    console.warn('Storage save failed:', e);
+  }
+}
+
+async function loadState() {
+  try {
+    if (window.storage) {
+      const result = await window.storage.get(STORAGE_KEY);
+      if (result && result.value) {
+        return JSON.parse(result.value);
+      }
+    }
+  } catch (e) {
+    console.warn('Storage load failed, using defaults:', e);
+  }
+  return null;
+}
+
+function initGantt() {
+  return [
   { id:"P1", phase:"Roomvent", title:"체코 논문", start:1, end:2, track:"PAPER", cnt:1 },
   { id:"P2", phase:"SCI", title:"SCI 논문", start:1, end:3, track:"PAPER", cnt:1 },
   { id:"A1", phase:"Phase 1", title:"컴포넌트 완성", start:4, end:7, track:"A", cnt:4 },
@@ -277,7 +312,9 @@ const GANTT = [
   { id:"B1", phase:"Step 2-3", title:"선분·전처리", start:6, end:9, track:"B", cnt:2 },
   { id:"B2", phase:"Step 4-5", title:"공간 탐지", start:9, end:11, track:"B", cnt:3 },
   { id:"B3", phase:"Step 6-7", title:"출력·Agent", start:12, end:15, track:"B", cnt:5 },
-];
+  ];
+}
+let ganttData = initGantt();
 const WEEKS = Array.from({length:15},(_,i)=>{
   const m=["3월","3월","3월","4월","4월","4월","4월","5월","5월","5월","5월","6월","6월","6월","6월"];
   return {num:i+1,month:m[i]};
@@ -285,8 +322,9 @@ const WEEKS = Array.from({length:15},(_,i)=>{
 const MONTHS=["3월","4월","5월","6월"].map(m=>({month:m,count:WEEKS.filter(w=>w.month===m).length}));
 
 let state={view:"overview",ganttFilter:"ALL",data:initData(),modal:null};
-function setState(p){Object.assign(state,p);render();}
-function updateTrack(k,fn){state.data[k]=fn(state.data[k]);render();}
+
+function setState(p){Object.assign(state,p);render();saveState();}
+function updateTrack(k,fn){state.data[k]=fn(state.data[k]);render();saveState();}
 
 function h(tag,attrs,...children){
   const el=document.createElement(tag);
@@ -408,7 +446,7 @@ function renderPhaseCard(phase,tk,tc,isLast){
   tl.appendChild(dot);
   if(!isLast)tl.appendChild(h('div',{style:{width:'2px',flex:'1',background:isFut?'repeating-linear-gradient(to bottom,#d6d3d1 0,#d6d3d1 4px,transparent 4px,transparent 8px)':allDone?'var(--green)':tc,opacity:isFut?'0.5':'0.3'}}));
 
-  const card=h('div',{className:'phase-card',style:{background:allDone?'var(--green-light)':isFut?'#fafaf9':'var(--card)',borderColor:allDone?'var(--green-border)':isFut?'var(--border)':tc+'40',opacity:isFut?'0.7':'1'}});
+  const card=h('div',{className:'phase-card',style:{background:allDone?'var(--green-light)':isFut?'#fafaf9':'var(--card)',borderColor:allDone?'var(--green-border)':isFut?'var(--border)':tc+'40'}});
   const hdr=h('div',{className:'phase-header'});
   hdr.append(
     h('div',{style:{display:'flex',alignItems:'center',gap:'0'}},renderInlineEdit(phase.phase,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,phase:v}:p));},{fontSize:'12px',fontWeight:'800',color:allDone?'var(--green)':isFut?'var(--faint)':tc,marginRight:'8px'}),renderInlineEdit(phase.title,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,title:v}:p));},{fontSize:'14px',fontWeight:'700',color:isFut?'var(--muted)':'var(--text)'})),
@@ -418,11 +456,11 @@ function renderPhaseCard(phase,tk,tc,isLast){
   const tl2=h('div',{style:{display:'flex',flexDirection:'column',gap:'4px'}});
   phase.tasks.forEach(task=>{
     const r=RISK[task.risk];
-    const row=h('div',{className:'task-row',style:{background:task.done?'var(--green-light)':isFut?'#f5f5f4':r.bg,borderColor:task.done?'var(--green-border)':isFut?'var(--border)':r.border}});
+    const row=h('div',{className:'task-row',style:{background:task.done?'var(--green-light)':r.bg,borderColor:task.done?'var(--green-border)':r.border}});
     row.appendChild(renderCheckbox(task,tc,tk,phase.id));
-    row.appendChild(renderInlineEdit(task.name,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,name:v}:t)}:p));},{flex:'1',fontSize:'12px',fontWeight:'500',color:task.done?'var(--faint)':isFut?'var(--faint)':'var(--text)',textDecoration:task.done?'line-through':'none'}));
-    if(!isFut)row.appendChild(renderInlineEdit(task.week,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,week:v}:t)}:p));},{fontSize:'10px',color:'var(--faint)',whiteSpace:'nowrap'}));
-    if(!isFut&&!task.done)row.appendChild(renderRiskSelector(task,tk,phase.id));
+    row.appendChild(renderInlineEdit(task.name,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,name:v}:t)}:p));},{flex:'1',fontSize:'12px',fontWeight:'500',color:task.done?'var(--faint)':'var(--text)',textDecoration:task.done?'line-through':'none'}));
+    row.appendChild(renderInlineEdit(task.week,v=>{updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.map(t=>t.id===task.id?{...t,week:v}:t)}:p));},{fontSize:'10px',color:'var(--faint)',whiteSpace:'nowrap'}));
+    if(!task.done)row.appendChild(renderRiskSelector(task,tk,phase.id));
     if(task.done)row.appendChild(h('span',{className:'risk-badge',style:{color:'var(--green)',borderColor:'var(--green-border)'}},'완료'));
     const delBtn=h('button',{className:'del-btn',onClick:e=>{e.stopPropagation();if(confirm('이 태스크를 삭제하시겠습니까?'))updateTrack(tk,rm=>rm.map(p=>p.id===phase.id?{...p,tasks:p.tasks.filter(t=>t.id!==task.id)}:p));}});
     delBtn.textContent='✕';
@@ -469,7 +507,6 @@ function renderModal(){
           row.appendChild(del);
           card.appendChild(row);
         });
-        // Add task mini-form for this phase
         const addRow=h('div',{style:{display:'flex',gap:'6px',marginTop:'8px',marginBottom:'12px'}});
         const addInput=h('input',{placeholder:'새 태스크 추가...',style:{flex:'1',padding:'6px 10px',borderRadius:'6px',border:'1px solid var(--border)',fontSize:'11px',outline:'none',fontFamily:'inherit'}});
         const addBtn=h('button',{style:{padding:'6px 12px',borderRadius:'6px',border:'none',background:t.color,color:'white',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}},'추가');
@@ -488,7 +525,7 @@ function renderModal(){
     const wn=state.modal.weekNum,wk=WEEKS[wn-1];
     card.appendChild(h('h3',{},wk.month+' W'+wn));
     const all=[];
-    GANTT.forEach(g=>{if(wn>=g.start&&wn<=g.end){const t=TRACKS[g.track],td=state.data[g.track];if(td)td.forEach(p=>p.tasks.forEach(task=>all.push({...task,trackIcon:t.icon,trackColor:t.color,phaseName:p.phase})));}});
+    ganttData.forEach(g=>{if(wn>=g.start&&wn<=g.end){const t=TRACKS[g.track],td=state.data[g.track];if(td)td.forEach(p=>p.tasks.forEach(task=>all.push({...task,trackIcon:t.icon,trackColor:t.color,phaseName:p.phase})));}});
     const seen=new Set(),uniq=all.filter(t=>{if(seen.has(t.id))return false;seen.add(t.id);return true;});
     if(uniq.length===0)card.appendChild(h('div',{style:{padding:'16px',textAlign:'center',color:'var(--faint)',fontSize:'13px'}},'이 주에 해당하는 태스크가 없습니다.'));
     else{
@@ -529,7 +566,7 @@ function renderDetailView(tk){
   pb.append(pt,h('span',{style:{fontSize:'12px',fontWeight:'700',opacity:'0.9'}},s.pct+'%'));hero.appendChild(pb);root.appendChild(hero);
   const phs=h('div',{style:{padding:'0 4px'}});
   rm.forEach((phase,i)=>{
-    if(i===si&&si>0){const d=h('div',{className:'semester-divider'});d.append(h('div',{className:'line',style:{background:tr.color+'44'}}),h('span',{className:'label'},'🎯 1학기 목표선 — 아래는 2학기 이후'),h('div',{className:'line',style:{background:tr.color+'44'}}));phs.appendChild(d);}
+    if(i===si&&si>0){const d=h('div',{className:'semester-divider'});d.append(h('div',{className:'line',style:{background:tr.color+'44'}}),h('span',{className:'label'},'📌 아래는 2학기 이후 계획'),h('div',{className:'line',style:{background:tr.color+'44'}}));phs.appendChild(d);}
     phs.appendChild(renderPhaseCard(phase,tk,tr.color,i===rm.length-1));
   });root.appendChild(phs);return root;
 }
@@ -541,7 +578,6 @@ function renderOverview(){
   hdr.appendChild(inn);frag.appendChild(hdr);
   const con=h('div',{className:'container'});
 
-  // Track Cards (3col)
   const grid=h('div',{className:'track-grid'});
   ['A','B','PAPER'].forEach((key,idx)=>{
     const t=TRACKS[key],rm=state.data[key],s=stats(rm),sem=rm.filter(p=>p.status!=='future').length;
@@ -561,7 +597,6 @@ function renderOverview(){
     grid.appendChild(card);
   });con.appendChild(grid);
 
-  // Gantt
   const gw=h('div',{className:'gantt-wrap fade-up',style:{animationDelay:'0.2s'}});
   const gh=h('div',{className:'gantt-header'});gh.appendChild(h('h2',{},'1학기 타임라인'));
   const fr=h('div',{style:{display:'flex',gap:'6px'}});
@@ -577,7 +612,6 @@ function renderOverview(){
   MONTHS.forEach(ms=>mr.appendChild(h('div',{style:{flex:ms.count,textAlign:'center',padding:'10px 0 3px',fontSize:'12px',fontWeight:'700',color:ms.month==='3월'?'var(--track-p)':'#57534e'}},ms.month)));
   gi.appendChild(mr);
 
-  // Week row (clickable)
   const wr=h('div',{style:{display:'flex',borderBottom:'1px solid var(--border-light)',marginBottom:'6px'}});
   wr.appendChild(h('div',{style:{width:'150px',flexShrink:'0'}}));
   WEEKS.forEach(w=>{
@@ -585,15 +619,13 @@ function renderOverview(){
     wb.addEventListener('click',()=>setState({modal:{type:'week',weekNum:w.num}}));wr.appendChild(wb);
   });gi.appendChild(wr);
 
-  // NOW
   const nr=h('div',{style:{display:'flex',position:'relative'}});nr.appendChild(h('div',{style:{width:'150px',flexShrink:'0'}}));
   const na=h('div',{style:{flex:'15',position:'relative',height:'0'}});
   na.append(h('div',{style:{position:'absolute',left:(0.5/15*100)+'%',top:'-6px',bottom:'-300px',width:'2px',background:'var(--track-p)',opacity:'0.25',zIndex:'1'}}),
     h('div',{style:{position:'absolute',left:(0.5/15*100)+'%',top:'-14px',transform:'translateX(-50%)',background:'var(--track-p)',color:'white',fontSize:'8px',padding:'2px 5px',borderRadius:'3px',fontWeight:'700',zIndex:'2',fontFamily:"'JetBrains Mono',monospace"}},'NOW'));
   nr.appendChild(na);gi.appendChild(nr);
 
-  // Bars (clickable)
-  const fil=state.ganttFilter==='ALL'?GANTT:GANTT.filter(p=>p.track===state.ganttFilter);
+  const fil=state.ganttFilter==='ALL'?ganttData:ganttData.filter(p=>p.track===state.ganttFilter);
   fil.forEach(phase=>{
     const t=TRACKS[phase.track];
     const row=h('div',{style:{display:'flex',alignItems:'center',marginBottom:'5px'}});
@@ -602,12 +634,103 @@ function renderOverview(){
     row.appendChild(lb);
     const ba=h('div',{style:{flex:'15',display:'flex',position:'relative',height:'30px'}});
     WEEKS.forEach(()=>ba.appendChild(h('div',{style:{flex:'1',borderLeft:'1px solid #fafaf9'}})));
-    const bar=h('div',{className:'gantt-bar',style:{position:'absolute',left:((phase.start-1)/15*100)+'%',width:((phase.end-phase.start+1)/15*100)+'%',top:'5px',height:'20px',borderRadius:'5px',background:`linear-gradient(135deg,${t.mid},${t.light})`,border:`1.5px solid ${t.mid}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'9px',fontWeight:'700',color:t.color}},phase.cnt+'개');
-    bar.addEventListener('click',()=>setState({modal:{type:'gantt',phase}}));
-    ba.appendChild(bar);row.appendChild(ba);gi.appendChild(row);
+
+    const barWrap=h('div',{style:{position:'absolute',left:((phase.start-1)/15*100)+'%',width:((phase.end-phase.start+1)/15*100)+'%',top:'5px',height:'20px'}});
+    const bar=h('div',{className:'gantt-bar',style:{position:'absolute',inset:'0',borderRadius:'5px',background:`linear-gradient(135deg,${t.mid},${t.light})`,border:`1.5px solid ${t.mid}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'9px',fontWeight:'700',color:t.color}},phase.cnt+'개');
+
+    // Tooltip
+    const tip=h('div',{style:{position:'absolute',bottom:'calc(100% + 6px)',left:'50%',transform:'translateX(-50%)',background:'#1c1917',color:'white',fontSize:'10px',fontWeight:'600',padding:'4px 10px',borderRadius:'6px',whiteSpace:'nowrap',pointerEvents:'none',opacity:'0',transition:'opacity 0.15s',zIndex:'20',fontFamily:'inherit'}});
+
+    function updateTip(s,e){ tip.textContent='W'+s+' → W'+e+' ('+WEEKS[s-1].month+'~'+WEEKS[e-1].month+')'; }
+
+    // ── Drag to move entire bar ──
+    let dragState=null;
+    bar.addEventListener('mousedown',e=>{
+      if(e.target.classList.contains('gantt-resize'))return;
+      e.preventDefault();
+      const baRect=ba.getBoundingClientRect();
+      const cellW=baRect.width/15;
+      const startX=e.clientX;
+      const origStart=phase.start, origEnd=phase.end, dur=origEnd-origStart;
+      bar.classList.add('dragging');
+      tip.style.opacity='1';
+      updateTip(origStart,origEnd);
+
+      const onMove=ev=>{
+        const dx=ev.clientX-startX;
+        let newStart=origStart+Math.round(dx/cellW);
+        newStart=Math.max(1,Math.min(15-dur,newStart));
+        const newEnd=newStart+dur;
+        barWrap.style.left=((newStart-1)/15*100)+'%';
+        updateTip(newStart,newEnd);
+        dragState={start:newStart,end:newEnd};
+      };
+      const onUp=()=>{
+        bar.classList.remove('dragging');
+        tip.style.opacity='0';
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+        if(dragState&&(dragState.start!==origStart||dragState.end!==origEnd)){
+          phase.start=dragState.start; phase.end=dragState.end;
+          saveState(); render();
+        }
+        dragState=null;
+      };
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+
+    // Click to open modal (only if not dragged)
+    bar.addEventListener('click',e=>{
+      if(dragState)return;
+      setState({modal:{type:'gantt',phase}});
+    });
+
+    // ── Resize handles ──
+    function makeResizeHandle(side){
+      const handle=h('div',{className:'gantt-resize '+side});
+      handle.addEventListener('mousedown',e=>{
+        e.preventDefault(); e.stopPropagation();
+        const baRect=ba.getBoundingClientRect();
+        const cellW=baRect.width/15;
+        const startX=e.clientX;
+        const origStart=phase.start, origEnd=phase.end;
+        bar.classList.add('dragging');
+        tip.style.opacity='1';
+        updateTip(origStart,origEnd);
+        let rs=null;
+
+        const onMove=ev=>{
+          const dx=ev.clientX-startX;
+          const dCells=Math.round(dx/cellW);
+          let ns=origStart, ne=origEnd;
+          if(side==='left'){ ns=Math.max(1,Math.min(origEnd,origStart+dCells)); }
+          else { ne=Math.min(15,Math.max(origStart,origEnd+dCells)); }
+          barWrap.style.left=((ns-1)/15*100)+'%';
+          barWrap.style.width=((ne-ns+1)/15*100)+'%';
+          updateTip(ns,ne);
+          rs={start:ns,end:ne};
+        };
+        const onUp=()=>{
+          bar.classList.remove('dragging');
+          tip.style.opacity='0';
+          document.removeEventListener('mousemove',onMove);
+          document.removeEventListener('mouseup',onUp);
+          if(rs&&(rs.start!==origStart||rs.end!==origEnd)){
+            phase.start=rs.start; phase.end=rs.end;
+            saveState(); render();
+          }
+        };
+        document.addEventListener('mousemove',onMove);
+        document.addEventListener('mouseup',onUp);
+      });
+      return handle;
+    }
+
+    barWrap.append(bar,makeResizeHandle('left'),makeResizeHandle('right'),tip);
+    ba.appendChild(barWrap);row.appendChild(ba);gi.appendChild(row);
   });gs.appendChild(gi);gw.appendChild(gs);con.appendChild(gw);
 
-  // Bottom
   const bot=h('div',{className:'bottom-grid fade-up',style:{animationDelay:'0.3s'}});
   const rc=h('div',{className:'risk-card'});rc.appendChild(h('h3',{style:{fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}},'⚠️ 1학기 고위험 태스크'));
   const hrt=[...state.data.A,...state.data.B,...state.data.PAPER].filter(p=>p.status!=='future').flatMap(p=>p.tasks.filter(t=>t.risk==='high'&&!t.done).map(t=>({...t,phase:p.phase})));
@@ -636,7 +759,21 @@ function render(){
   const em=document.getElementById('modal-root');if(em)em.remove();
   if(state.modal){const mr=h('div',{id:'modal-root'});mr.appendChild(renderModal());document.body.appendChild(mr);}
 }
-render();
+
+// ── INIT: Load saved data, then render ──
+(async function init() {
+  const saved = await loadState();
+  if (saved) {
+    if (saved.data) {
+      state.data = saved.data;
+      if (saved.gantt) ganttData = saved.gantt;
+    } else {
+      // backward compat: old format stored data directly
+      state.data = saved;
+    }
+  }
+  render();
+})();
 </script>
 </body>
 </html>
