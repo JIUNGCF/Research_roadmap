@@ -191,12 +191,12 @@
 <body>
 <div id="app"><div class="loading-screen">로드맵 불러오는 중...</div></div>
 <script>
-const STORAGE_KEY = 'roadmap-2026-data';
+const STORAGE_KEY = 'roadmap-2026-v2';
 const GANTT_STORAGE_KEY = 'roadmap-2026-gantt';
 const makeId = () => Math.random().toString(36).slice(2, 10);
 const TRACKS = {
   A: { name:"CO₂ 히트펌프 시뮬레이션", short:"히트펌프", color:"#0ea5e9", light:"#e0f2fe", mid:"#7dd3fc", dark:"#0369a1", icon:"🔥", goal:"Phase 2 완료 — 정상상태 CO₂ 사이클 구동, COP 문헌 일치" },
-  B: { name:"Ontology 기반 AI Agent", short:"AI Agent", color:"#8b5cf6", light:"#ede9fe", mid:"#c4b5fd", dark:"#6d28d9", icon:"🧠", goal:"Step 7 — 도면→공간정보 자동추출 + 자연어 질의 데모" },
+  B: { name:"CAD-LLM 도면 해석", short:"CAD-LLM", color:"#8b5cf6", light:"#ede9fe", mid:"#c4b5fd", dark:"#6d28d9", icon:"🧠", goal:"VLM+LLM 기반 건축도면 자동 해석 → 자연어 질의 데모" },
   PAPER: { name:"논문 투고", short:"논문", color:"#f43f5e", light:"#ffe4e6", mid:"#fda4af", dark:"#be123c", icon:"📝", goal:"SCI + Roomvent 투고 완료" },
 };
 const RISK = {
@@ -242,27 +242,32 @@ function initData() {
       ]},
     ],
     B: [
-      { id:makeId(), phase:"Step 0-1", title:"환경 구축 · 도면 분석", semester:"1학기", period:"4월 초", status:"active", tasks:[
-        { id:makeId(), name:"DWG → DXF 변환 (ODA Converter 설치)", risk:"low", week:"4월 1주", done:false },
-        { id:makeId(), name:"레이어 목록 추출, 벽 레이어 특정", risk:"low", week:"4월 2주", done:false },
+      { id:makeId(), phase:"Phase 1", title:"데이터 수집 · 전처리", semester:"1학기", period:"4월 초", status:"active", tasks:[
+        { id:makeId(), name:"건국대 캠퍼스 DWG 도면 수집 · 정리", risk:"low", week:"4월 1주", done:false },
+        { id:makeId(), name:"DWG → DXF 변환 (ODA Converter)", risk:"low", week:"4월 1주", done:false },
+        { id:makeId(), name:"레이어 분류 체계 분석 · 벽/문/창 레이어 특정", risk:"low", week:"4월 2주", done:false },
       ]},
-      { id:makeId(), phase:"Step 2-3", title:"선분 추출 · Noding 전처리", semester:"1학기", period:"4~5월", status:"upcoming", tasks:[
-        { id:makeId(), name:"LINE/ARC/POLYLINE → 직선 조각 변환", risk:"mid", week:"4월 3~4주", done:false },
-        { id:makeId(), name:"틈 메우기 + 교차점 쪼개기 (Noding)", risk:"high", week:"4월5~5월1주", done:false },
+      { id:makeId(), phase:"Phase 2", title:"VLM + YOLO 도면 파싱", semester:"1학기", period:"4~5월", status:"upcoming", tasks:[
+        { id:makeId(), name:"YOLO 학습 데이터 라벨링 (벽/문/창/계단 등)", risk:"mid", week:"4월 2~3주", done:false },
+        { id:makeId(), name:"YOLOv8 객체 탐지 모델 학습 · 평가", risk:"high", week:"4월 3~4주", done:false },
+        { id:makeId(), name:"VLM (GPT-4V / Claude Vision) 도면 해석 실험", risk:"mid", week:"5월 1주", done:false },
+        { id:makeId(), name:"Semantic segmentation 파이프라인 구축", risk:"high", week:"5월 1~2주", done:false },
       ]},
-      { id:makeId(), phase:"Step 4-5", title:"공간 탐지 · 속성 분석", semester:"1학기", period:"5월", status:"upcoming", tasks:[
-        { id:makeId(), name:"polygonize로 닫힌 공간(방) 찾기", risk:"high", week:"5월 2주", done:false },
-        { id:makeId(), name:"공간 탐지 디버깅 · 검증", risk:"mid", week:"5월 3주", done:false },
-        { id:makeId(), name:"벽/문/창/인접관계 속성 분석", risk:"mid", week:"5월 4주", done:false },
+      { id:makeId(), phase:"Phase 3", title:"공간 탐지 · 기하 분석", semester:"1학기", period:"5월", status:"upcoming", tasks:[
+        { id:makeId(), name:"선분 추출 + Noding 전처리", risk:"high", week:"5월 2주", done:false },
+        { id:makeId(), name:"polygonize 기반 공간(방) 탐지", risk:"high", week:"5월 3주", done:false },
+        { id:makeId(), name:"벽/문/창/인접관계 속성 추출", risk:"mid", week:"5월 3~4주", done:false },
+        { id:makeId(), name:"GNN 기반 공간 관계 그래프 구성", risk:"high", week:"5월 4주", done:false },
       ]},
-      { id:makeId(), phase:"Step 6", title:"결과 저장 · 검증", semester:"1학기", period:"6월 초", status:"upcoming", tasks:[
-        { id:makeId(), name:"JSON 출력 구조 설계 · 저장", risk:"low", week:"6월 1주", done:false },
-        { id:makeId(), name:"시각 검증 (도면 위 오버레이)", risk:"low", week:"6월 1주", done:false },
+      { id:makeId(), phase:"Phase 4", title:"Knowledge Graph · 온톨로지", semester:"1학기", period:"5~6월", status:"upcoming", tasks:[
+        { id:makeId(), name:"IFC/BOT/BRICK 온톨로지 매핑 설계", risk:"mid", week:"6월 1주", done:false },
+        { id:makeId(), name:"Neo4j 지식 그래프 구축", risk:"mid", week:"6월 1~2주", done:false },
+        { id:makeId(), name:"CLIP 멀티모달 임베딩 + 벡터 DB 연동", risk:"high", week:"6월 2주", done:false },
       ]},
-      { id:makeId(), phase:"Step 7", title:"AI Agent 연동", semester:"1학기", period:"6월", status:"upcoming", tasks:[
-        { id:makeId(), name:"자연어 도면 질의응답 프로토타입", risk:"mid", week:"6월 2주", done:false },
-        { id:makeId(), name:"Ontology 연계 (IFC/BOT/BRICK)", risk:"high", week:"6월 3주", done:false },
-        { id:makeId(), name:"데모 완성 · 문서화", risk:"low", week:"6월 4주", done:false },
+      { id:makeId(), phase:"Phase 5", title:"LLM Agent 통합 · 데모", semester:"1학기", period:"6월", status:"upcoming", tasks:[
+        { id:makeId(), name:"LangChain/LangGraph ReAct 에이전트 구현", risk:"mid", week:"6월 3주", done:false },
+        { id:makeId(), name:"자연어 도면 질의응답 인터페이스", risk:"mid", week:"6월 3~4주", done:false },
+        { id:makeId(), name:"E2E 데모 완성 · 문서화", risk:"low", week:"6월 4주", done:false },
       ]},
     ],
     PAPER: [
@@ -308,10 +313,10 @@ function initGantt() {
   { id:"A1", phase:"Phase 1", title:"컴포넌트 완성", start:4, end:7, track:"A", cnt:4 },
   { id:"A2", phase:"Phase 2", title:"정상상태 사이클", start:8, end:11, track:"A", cnt:4 },
   { id:"AM", phase:"마무리", title:"정리·문서화", start:12, end:15, track:"A", cnt:3 },
-  { id:"B0", phase:"Step 0-1", title:"환경 구축", start:4, end:5, track:"B", cnt:2 },
-  { id:"B1", phase:"Step 2-3", title:"선분·전처리", start:6, end:9, track:"B", cnt:2 },
-  { id:"B2", phase:"Step 4-5", title:"공간 탐지", start:9, end:11, track:"B", cnt:3 },
-  { id:"B3", phase:"Step 6-7", title:"출력·Agent", start:12, end:15, track:"B", cnt:5 },
+  { id:"B0", phase:"Phase 1", title:"데이터 수집", start:4, end:5, track:"B", cnt:3 },
+  { id:"B1", phase:"Phase 2", title:"VLM+YOLO 파싱", start:5, end:9, track:"B", cnt:4 },
+  { id:"B2", phase:"Phase 3", title:"공간·기하 분석", start:9, end:11, track:"B", cnt:4 },
+  { id:"B3", phase:"Phase 4-5", title:"KG·Agent 통합", start:12, end:15, track:"B", cnt:6 },
   ];
 }
 let ganttData = initGantt();
@@ -555,7 +560,7 @@ function renderDetailView(tk){
     renderInlineEdit(tr.name,v=>{TRACKS[tk].name=v;render();},{fontSize:'24px',fontWeight:'800',color:'white'}),
     renderInlineEdit(tr.goal,v=>{TRACKS[tk].goal=v;render();},{fontSize:'13px',color:'rgba(255,255,255,0.85)',marginTop:'4px'})
   )));
-  const gl=tk==='A'?'Phase 2':tk==='B'?'Step 7':'투고 완료';
+  const gl=tk==='A'?'Phase 2':tk==='B'?'Phase 5':'투고 완료';
   const sr=h('div',{style:{display:'flex',gap:'16px',marginTop:'18px',flexWrap:'wrap'}});
   [{l:'전체 Phase',v:rm.length+'개'},{l:'완료 / 전체',v:`${s.done} / ${s.total}`,c:s.done===s.total&&s.total>0?'#4ade80':null},{l:'고위험 (미완료)',v:hr+'개',c:hr>0?'#fbbf24':'#4ade80'},{l:'1학기 목표',v:gl}].forEach(x=>{
     sr.appendChild(h('div',{className:'stat-box'},h('div',{className:'stat-label'},x.l),h('div',{className:'stat-value',style:{color:x.c||'white'}},x.v)));
@@ -574,7 +579,7 @@ function renderDetailView(tk){
 function renderOverview(){
   const frag=document.createDocumentFragment();
   const hdr=h('div',{className:'header'});const inn=h('div',{className:'header-inner'});
-  inn.append(h('div',{className:'header-label'},'2026 Spring Semester'),h('h1',{},'연구 로드맵'),h('p',{},'CO₂ 히트펌프 시뮬레이션 · Ontology 기반 AI Agent · 논문 투고'));
+  inn.append(h('div',{className:'header-label'},'2026 Spring Semester'),h('h1',{},'연구 로드맵'),h('p',{},'CO₂ 히트펌프 시뮬레이션 · CAD-LLM 도면 해석 · 논문 투고'));
   hdr.appendChild(inn);frag.appendChild(hdr);
   const con=h('div',{className:'container'});
 
@@ -619,10 +624,19 @@ function renderOverview(){
     wb.addEventListener('click',()=>setState({modal:{type:'week',weekNum:w.num}}));wr.appendChild(wb);
   });gi.appendChild(wr);
 
+  // NOW marker — snap to current week center
+  const semesterStart=new Date(2026,2,2); // W1 starts March 2
+  const today=new Date();
+  const daysSinceStart=(today-semesterStart)/(1000*60*60*24);
+  const nowWeekNum=Math.min(15,Math.max(1,Math.ceil(daysSinceStart/7)));
+  const nowPct=((nowWeekNum-0.5)/15*100); // center of the week column
+
   const nr=h('div',{style:{display:'flex',position:'relative'}});nr.appendChild(h('div',{style:{width:'150px',flexShrink:'0'}}));
   const na=h('div',{style:{flex:'15',position:'relative',height:'0'}});
-  na.append(h('div',{style:{position:'absolute',left:(0.5/15*100)+'%',top:'-6px',bottom:'-300px',width:'2px',background:'var(--track-p)',opacity:'0.25',zIndex:'1'}}),
-    h('div',{style:{position:'absolute',left:(0.5/15*100)+'%',top:'-14px',transform:'translateX(-50%)',background:'var(--track-p)',color:'white',fontSize:'8px',padding:'2px 5px',borderRadius:'3px',fontWeight:'700',zIndex:'2',fontFamily:"'JetBrains Mono',monospace"}},'NOW'));
+  if(daysSinceStart>=0&&daysSinceStart<=15*7){
+    na.append(h('div',{style:{position:'absolute',left:nowPct+'%',top:'-6px',bottom:'-300px',width:'2px',background:'var(--track-p)',opacity:'0.25',zIndex:'1'}}),
+      h('div',{style:{position:'absolute',left:nowPct+'%',top:'-14px',transform:'translateX(-50%)',background:'var(--track-p)',color:'white',fontSize:'8px',padding:'2px 5px',borderRadius:'3px',fontWeight:'700',zIndex:'2',fontFamily:"'JetBrains Mono',monospace"}},'W'+nowWeekNum+' NOW'));
+  }
   nr.appendChild(na);gi.appendChild(nr);
 
   const fil=state.ganttFilter==='ALL'?ganttData:ganttData.filter(p=>p.track===state.ganttFilter);
@@ -736,12 +750,12 @@ function renderOverview(){
   const hrt=[...state.data.A,...state.data.B,...state.data.PAPER].filter(p=>p.status!=='future').flatMap(p=>p.tasks.filter(t=>t.risk==='high'&&!t.done).map(t=>({...t,phase:p.phase})));
   if(hrt.length===0)rc.appendChild(h('div',{style:{padding:'12px',background:'var(--green-light)',borderRadius:'6px',fontSize:'12px',color:'#16a34a',textAlign:'center',fontWeight:'600'}},'모든 고위험 태스크를 완료했습니다! 🎉'));
   else hrt.forEach(t=>{const row=h('div',{style:{padding:'6px 10px',background:'#fef2f2',borderRadius:'6px',marginBottom:'4px',border:'1px solid #fecaca',fontSize:'11px',display:'flex',alignItems:'center',gap:'8px'}});row.append(h('div',{style:{width:'5px',height:'5px',borderRadius:'50%',background:'var(--red)',flexShrink:'0'}}),h('span',{style:{flex:'1',fontWeight:'600'}},t.name),h('span',{style:{color:'var(--faint)',fontSize:'10px'}},t.week));rc.appendChild(row);});
-  rc.appendChild(h('div',{style:{marginTop:'10px',padding:'8px 10px',background:'#fffbeb',borderRadius:'6px',fontSize:'10px',color:'#92400e',lineHeight:'1.5',border:'1px solid #fde68a'}},'💡 Evaporator 2상 모델 + Noding이 최대 병목. 각 1주 버퍼 확보.'));
+  rc.appendChild(h('div',{style:{marginTop:'10px',padding:'8px 10px',background:'#fffbeb',borderRadius:'6px',fontSize:'10px',color:'#92400e',lineHeight:'1.5',border:'1px solid #fde68a'}},'💡 Evaporator 2상 모델 · YOLO 학습 · Noding/polygonize가 최대 병목. 각 1주 버퍼 확보.'));
   bot.appendChild(rc);
 
   const gc=h('div',{className:'goals-card'});gc.appendChild(h('h3',{style:{fontSize:'13px',fontWeight:'700',margin:'0 0 12px',color:'#d6d3d1'}},'🎯 1학기 도달 목표'));
   const sA=stats(state.data.A),sB=stats(state.data.B),sP=stats(state.data.PAPER);
-  [{icon:'🔥',name:'히트펌프',color:'#7dd3fc',desc:'Phase 2 — 정상상태 COP 문헌 일치',s:sA},{icon:'🧠',name:'AI Agent',color:'#c4b5fd',desc:'Step 7 — 도면 공간추출 + 질의 데모',s:sB},{icon:'📝',name:'논문',color:'#fda4af',desc:'SCI + Roomvent 투고, 리비전 대응',s:sP}].forEach(g=>{
+  [{icon:'🔥',name:'히트펌프',color:'#7dd3fc',desc:'Phase 2 — 정상상태 COP 문헌 일치',s:sA},{icon:'🧠',name:'CAD-LLM',color:'#c4b5fd',desc:'Phase 5 — VLM+LLM 도면 해석 + NL 질의 데모',s:sB},{icon:'📝',name:'논문',color:'#fda4af',desc:'SCI + Roomvent 투고, 리비전 대응',s:sP}].forEach(g=>{
     const row=h('div',{style:{display:'flex',alignItems:'center',gap:'10px',padding:'8px 12px',background:'rgba(255,255,255,0.06)',borderRadius:'8px',marginBottom:'6px'}});
     row.appendChild(h('span',{style:{fontSize:'18px'}},g.icon));
     const info=h('div',{style:{flex:'1'}});info.append(h('div',{style:{fontSize:'12px',fontWeight:'700',color:g.color}},g.name),h('div',{style:{fontSize:'11px',color:'#d6d3d1'}},g.desc));
